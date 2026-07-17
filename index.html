@@ -1,0 +1,2218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finkart - Your Financial Partner | Personal, Home & Business Loans</title>
+    <meta name="description" content="Finkart offers the best personal, home, and business loans with integrated EMI calculators and quick online approval. Join us today.">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style id="finkart-eligibility-widget-styles">
+    /* =====================================================
+       WIDGET-SCOPED TOKENS — namespaced so they never override
+       Finkart's site-wide CSS variables (e.g. --shadow-md, --radius-sm)
+       ===================================================== */
+    #finkart-eligibility-widget {
+      --bg: #F8FAFC;
+      --white: #FFFFFF;
+      --primary: #3B82F6;
+      --primary-dark: #2563EB;
+      --brand-grad: linear-gradient(90deg, #140733 0%, #471168 50%, #87149a 100%);
+      --gold: #D4AF37;
+      --green: #10B981;
+      --amber: #F59E0B;
+      --red: #EF4444;
+      --text: #0F172A;
+      --muted: #64748B;
+      --border: #E2E8F0;
+      --hover-bg: #EFF6FF;
+      --radius-sm: 8px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+      --shadow-lg: 0 20px 40px rgba(0,0,0,0.15);
+      --font-head: 'Outfit', sans-serif;
+      --font-body: 'Inter', sans-serif;
+
+      /* ── Easy to change ── */
+      --popup-delay-ms: 5000;    /* 5 seconds — change here to adjust */
+    }
+
+    #finkart-eligibility-widget *,
+    #finkart-eligibility-widget *::before,
+    #finkart-eligibility-widget *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* =====================================================
+       OVERLAY BACKDROP
+       ===================================================== */
+    #finkart-eligibility-widget #elig-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.65);
+      backdrop-filter: blur(4px);
+      z-index: 9000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .35s ease;
+    }
+    #finkart-eligibility-widget #elig-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* =====================================================
+       MODAL SHELL
+       ===================================================== */
+    #finkart-eligibility-widget .elig-modal {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 680px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      transform: translateY(24px) scale(0.97);
+      transition: transform .35s ease;
+    }
+    #finkart-eligibility-widget #elig-overlay.active .elig-modal {
+      transform: translateY(0) scale(1);
+    }
+
+    #finkart-eligibility-widget .elig-modal::-webkit-scrollbar { width: 6px; }
+    #finkart-eligibility-widget .elig-modal::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 99px; }
+    #finkart-eligibility-widget .elig-modal::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+
+    /* Close button */
+    #finkart-eligibility-widget .elig-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      border: none;
+      background: #f1f5f9;
+      color: var(--muted);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .2s;
+      z-index: 2;
+    }
+    #finkart-eligibility-widget .elig-close:hover { background: #e2e8f0; color: var(--text); }
+
+    /* Modal header */
+    #finkart-eligibility-widget .elig-header {
+      padding: 36px 36px 24px;
+      text-align: center;
+      background: linear-gradient(135deg, #f8f4ff 0%, #eff6ff 100%);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+    #finkart-eligibility-widget .elig-header .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: #ede9fe;
+      color: #6d28d9;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: var(--font-head);
+      margin-bottom: 12px;
+    }
+    #finkart-eligibility-widget .elig-header h2 {
+      font-family: var(--font-head);
+      font-size: 24px;
+      font-weight: 800;
+      background: var(--brand-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+    #finkart-eligibility-widget .elig-header p {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    /* =====================================================
+       LOAN TYPE SELECTOR (Step 1)
+       ===================================================== */
+    #finkart-eligibility-widget #step-select { padding: 28px 36px 36px; }
+
+    #finkart-eligibility-widget .loan-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 4px;
+    }
+    #finkart-eligibility-widget .loan-card {
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 22px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .25s ease;
+      background: var(--white);
+    }
+    #finkart-eligibility-widget .loan-card:hover {
+      border-color: var(--primary);
+      background: var(--hover-bg);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(59,130,246,0.15);
+    }
+    #finkart-eligibility-widget .loan-card .lc-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      margin: 0 auto 12px;
+    }
+    #finkart-eligibility-widget .loan-card.personal .lc-icon { background: #dbeafe; color: #2563eb; }
+    #finkart-eligibility-widget .loan-card.business .lc-icon { background: #d1fae5; color: #059669; }
+    #finkart-eligibility-widget .loan-card.home .lc-icon     { background: #fef3c7; color: #d97706; }
+    #finkart-eligibility-widget .loan-card h3 {
+      font-family: var(--font-head);
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    #finkart-eligibility-widget .loan-card p {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    /* =====================================================
+       FORM STEP (Step 2)
+       ===================================================== */
+    #finkart-eligibility-widget #step-form { display: none; padding: 28px 36px 36px; }
+
+    #finkart-eligibility-widget .form-back {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--primary);
+      cursor: pointer; margin-bottom: 20px;
+      background: none; border: none;
+      font-family: var(--font-body);
+    }
+    #finkart-eligibility-widget .form-back:hover { text-decoration: underline; }
+
+    #finkart-eligibility-widget .form-loan-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-family: var(--font-head);
+      font-size: 13px; font-weight: 600;
+      margin-bottom: 20px;
+    }
+    #finkart-eligibility-widget .form-loan-badge.personal { background: #dbeafe; color: #1d4ed8; }
+    #finkart-eligibility-widget .form-loan-badge.business { background: #d1fae5; color: #065f46; }
+    #finkart-eligibility-widget .form-loan-badge.home     { background: #fef3c7; color: #92400e; }
+
+    #finkart-eligibility-widget .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    #finkart-eligibility-widget .form-group { display: flex; flex-direction: column; gap: 5px; }
+    #finkart-eligibility-widget .form-group.full { grid-column: 1 / -1; }
+    #finkart-eligibility-widget .form-group label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    #finkart-eligibility-widget .form-group label .tip {
+      display: inline-block;
+      width: 15px; height: 15px;
+      background: #e2e8f0;
+      border-radius: 50%;
+      font-size: 10px;
+      text-align: center;
+      line-height: 15px;
+      color: var(--muted);
+      cursor: help;
+      margin-left: 4px;
+      position: relative;
+    }
+    /* Tooltip */
+    #finkart-eligibility-widget .tip:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      left: 50%; bottom: calc(100% + 6px);
+      transform: translateX(-50%);
+      background: var(--text);
+      color: white;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      white-space: nowrap;
+      max-width: 200px;
+      white-space: normal;
+      width: 180px;
+      z-index: 99;
+      pointer-events: none;
+    }
+    #finkart-eligibility-widget .tip:hover::before {
+      content: '';
+      position: absolute;
+      left: 50%; bottom: calc(100% + 2px);
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: var(--text);
+      z-index: 99;
+    }
+    #finkart-eligibility-widget .form-group input,
+    #finkart-eligibility-widget .form-group select {
+      padding: 10px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text);
+      background: var(--white);
+      transition: border-color .2s;
+      outline: none;
+    }
+    #finkart-eligibility-widget .form-group input:focus,
+    #finkart-eligibility-widget .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+    #finkart-eligibility-widget .form-group input.invalid { border-color: var(--red); }
+
+    #finkart-eligibility-widget .form-actions {
+      margin-top: 22px;
+      display: flex;
+      gap: 12px;
+    }
+    #finkart-eligibility-widget .btn-primary {
+      flex: 1;
+      padding: 13px;
+      background: var(--brand-grad);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-head);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    #finkart-eligibility-widget .btn-primary:hover { opacity: .88; }
+    #finkart-eligibility-widget .btn-reset {
+      padding: 13px 20px;
+      background: #f1f5f9;
+      color: var(--muted);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-head);
+      font-size: 15px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    #finkart-eligibility-widget .btn-reset:hover { background: #e2e8f0; color: var(--text); }
+
+    /* =====================================================
+       RESULT STEP (Step 3)
+       ===================================================== */
+    #finkart-eligibility-widget #step-result { display: none; padding: 28px 36px 36px; }
+
+    #finkart-eligibility-widget .result-hero {
+      border-radius: var(--radius-md);
+      padding: 24px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    #finkart-eligibility-widget .result-hero.eligible {
+      background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+      border: 2px solid #6ee7b7;
+    }
+    #finkart-eligibility-widget .result-hero.not-eligible {
+      background: linear-gradient(135deg, #fee2e2, #fecaca);
+      border: 2px solid #fca5a5;
+    }
+    #finkart-eligibility-widget .result-hero.partial {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 2px solid #fcd34d;
+    }
+    #finkart-eligibility-widget .result-status-icon { font-size: 40px; margin-bottom: 8px; }
+    #finkart-eligibility-widget .result-hero h3 {
+      font-family: var(--font-head);
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    #finkart-eligibility-widget .result-hero.eligible h3  { color: #065f46; }
+    #finkart-eligibility-widget .result-hero.not-eligible h3 { color: #7f1d1d; }
+    #finkart-eligibility-widget .result-hero.partial h3   { color: #78350f; }
+    #finkart-eligibility-widget .result-hero p { font-size: 13px; color: inherit; opacity: .8; }
+
+    #finkart-eligibility-widget .result-amount {
+      font-family: var(--font-head);
+      font-size: 32px;
+      font-weight: 800;
+      margin: 8px 0 2px;
+    }
+    #finkart-eligibility-widget .result-hero.eligible .result-amount  { color: #047857; }
+    #finkart-eligibility-widget .result-hero.partial .result-amount   { color: #92400e; }
+
+    #finkart-eligibility-widget .result-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    #finkart-eligibility-widget .result-card {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+    }
+    #finkart-eligibility-widget .result-card .rc-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    #finkart-eligibility-widget .result-card .rc-value {
+      font-family: var(--font-head);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    #finkart-eligibility-widget .reasons-box {
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    #finkart-eligibility-widget .reasons-box.issues   { background: #fff7ed; border: 1.5px solid #fed7aa; }
+    #finkart-eligibility-widget .reasons-box.tips     { background: #f0fdf4; border: 1.5px solid #bbf7d0; }
+    #finkart-eligibility-widget .reasons-box h4 {
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    #finkart-eligibility-widget .reasons-box.issues h4 { color: #c2410c; }
+    #finkart-eligibility-widget .reasons-box.tips h4   { color: #166534; }
+    #finkart-eligibility-widget .reasons-box ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    #finkart-eligibility-widget .reasons-box li {
+      font-size: 13px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    #finkart-eligibility-widget .reasons-box.issues li::before { content: '⚠️'; flex-shrink: 0; }
+    #finkart-eligibility-widget .reasons-box.tips li::before   { content: '✅'; flex-shrink: 0; }
+
+    /* Lead capture inside result */
+    #finkart-eligibility-widget .lead-box {
+      background: linear-gradient(135deg, #f8f4ff 0%, #eff6ff 100%);
+      border: 1.5px solid #c4b5fd;
+      border-radius: var(--radius-md);
+      padding: 20px;
+    }
+    #finkart-eligibility-widget .lead-box h4 {
+      font-family: var(--font-head);
+      font-size: 16px;
+      font-weight: 700;
+      color: #5b21b6;
+      margin-bottom: 4px;
+    }
+    #finkart-eligibility-widget .lead-box p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    #finkart-eligibility-widget .lead-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    #finkart-eligibility-widget .lead-fields input {
+      padding: 10px 12px;
+      border: 1.5px solid #ddd6fe;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 14px;
+      background: white;
+      outline: none;
+    }
+    #finkart-eligibility-widget .lead-fields input:focus { border-color: #7c3aed; }
+    #finkart-eligibility-widget .lead-fields .full { grid-column: 1 / -1; }
+
+    #finkart-eligibility-widget .lead-submitted-msg {
+      display: none;
+      text-align: center;
+      padding: 14px;
+      background: #d1fae5;
+      border-radius: var(--radius-sm);
+      color: #065f46;
+      font-weight: 600;
+      font-family: var(--font-head);
+      font-size: 14px;
+    }
+
+    #finkart-eligibility-widget .result-actions {
+      display: flex; gap: 12px; margin-top: 16px;
+    }
+    #finkart-eligibility-widget .btn-again {
+      flex: 1;
+      padding: 12px;
+      background: #f1f5f9;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text);
+      transition: all .2s;
+    }
+    #finkart-eligibility-widget .btn-again:hover { background: #e2e8f0; }
+
+    #finkart-eligibility-widget .disclaimer {
+      margin-top: 14px;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* =====================================================
+       RESPONSIVE
+       ===================================================== */
+    @media (max-width: 600px) {
+      #finkart-eligibility-widget .elig-header, #finkart-eligibility-widget #step-select, #finkart-eligibility-widget #step-form, #finkart-eligibility-widget #step-result {
+        padding-left: 20px; padding-right: 20px;
+      }
+      #finkart-eligibility-widget .loan-cards { grid-template-columns: 1fr; }
+      #finkart-eligibility-widget .form-grid  { grid-template-columns: 1fr; }
+      #finkart-eligibility-widget .form-group.full { grid-column: 1; }
+      #finkart-eligibility-widget .result-cards   { grid-template-columns: 1fr; }
+      #finkart-eligibility-widget .lead-fields    { grid-template-columns: 1fr; }
+      #finkart-eligibility-widget .lead-fields .full { grid-column: 1; }
+      #finkart-eligibility-widget .elig-header h2 { font-size: 20px; }
+    }
+
+    /* =====================================================
+       FLOATING TRIGGER BUTTON (stays on page always)
+       ===================================================== */
+    #finkart-eligibility-widget #elig-fab {
+      position: fixed;
+      bottom: 28px; right: 28px;
+      background: var(--brand-grad);
+      color: white;
+      border: none;
+      border-radius: 99px;
+      padding: 14px 22px;
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(71,17,104,0.4);
+      z-index: 8999;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all .25s;
+    }
+    #finkart-eligibility-widget #elig-fab:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(71,17,104,0.5);
+    }
+    @media (max-width:500px) {
+      #finkart-eligibility-widget #elig-fab { bottom: 16px; right: 16px; padding: 12px 16px; font-size: 13px; }
+    }
+    </style>
+</head>
+<body>
+
+    <!-- Header / Navbar -->
+    <header>
+        <div class="container navbar">
+            <div class="brand-container">
+                <a href="#home" aria-label="Go to home" style="display: inline-flex; align-items: center; gap: 12px; text-decoration: none;">
+                    <img src="logo.png" alt="Finkart Logo" class="brand-img">
+                    <img src="logo-text.png" alt="Finkart Text" class="brand-text-img">
+                </a>
+            </div>
+            
+            <nav class="nav-links">
+                <a href="#home">Home</a>
+                <a href="#services">Loans</a>
+                <a href="#rates">Interest Rates</a>
+                <a href="#calculator">EMI Calculator</a>
+                <a href="#blogs">Blogs</a>
+                <a href="about.html">About Us</a>
+                <a href="javascript:void(0)" class="expert-btn" onclick="openExpertModal()">Talk to Expert <i class="fa-solid fa-headset"></i></a>
+            </nav>
+            
+            <div class="nav-actions" id="nav-auth-section">
+                <button class="btn-outline" onclick="openModal('login')">Log In</button>
+                <button class="btn-primary" onclick="openModal('signup')">Sign Up</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-bg-accent"></div>
+        <div class="container">
+            <div class="hero-text">
+                <div class="badge"><i class="fa-solid fa-bolt" style="color:var(--accent-color); margin-right:5px;"></i> Fast Approvals</div>
+                <h1>Empower Your Dreams With <span>Finkart</span></h1>
+                <p>Experience seamless borrowing with competitive rates across Personal, Home, and Business loans. Your financial future starts right here.</p>
+                <button class="btn-primary" style="font-size: 18px; padding: 16px 32px;" onclick="document.getElementById('services').scrollIntoView({behavior: 'smooth'})">Explore Loans <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i></button>
+            </div>
+            <div class="hero-visual">
+                <div class="calc-wrapper hero-calc-card" id="calculator">
+                    <div class="calc-inputs">
+                        <h3 style="margin-bottom: 12px; font-size: 18px; color: var(--text-dark); font-family: var(--font-heading);">EMI Calculator</h3>
+                        <div class="calc-group">
+                            <div class="calc-header">
+                                <label for="principal">Loan Amount</label>
+                                <span class="value-display" id="principal-display">â‚¹ 5,00,000</span>
+                            </div>
+                            <input type="range" id="principal" min="50000" max="10000000" step="10000" value="500000">
+                        </div>
+
+                        <div class="calc-group">
+                            <div class="calc-header">
+                                <label for="interest">Interest Rate (p.a)</label>
+                                <span class="value-display" id="interest-display">10.5%</span>
+                            </div>
+                            <input type="range" id="interest" min="5" max="25" step="0.1" value="10.5">
+                        </div>
+
+                        <div class="calc-group" style="margin-bottom: 0;">
+                            <div class="calc-header">
+                                <label for="tenure">Loan Tenure (Years)</label>
+                                <span class="value-display" id="tenure-display">5 Yrs</span>
+                            </div>
+                            <input type="range" id="tenure" min="1" max="30" step="1" value="5">
+                        </div>
+                    </div>
+                    
+                    <div class="calc-results">
+                        <div class="result-item">
+                            <div class="result-label">Monthly EMI</div>
+                            <div class="result-value total-emi" id="emi-result">â‚¹ 10,747</div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+                            <div class="result-item" style="flex: 1; margin-bottom: 0;">
+                                <div class="result-label" style="font-size: 13px;">Total Interest</div>
+                                <div class="result-value" id="interest-result" style="font-size: 20px;">â‚¹ 1,44,817</div>
+                            </div>
+                            <div class="result-item" style="flex: 1; margin-bottom: 0;">
+                                <div class="result-label" style="font-size: 13px;">Total Payment</div>
+                                <div class="result-value" id="total-result" style="font-size: 20px;">â‚¹ 6,44,817</div>
+                            </div>
+                        </div>
+                        
+                        <button class="btn-primary" style="background: white; color: var(--primary-dark); padding: 12px; font-size: 15px; box-shadow: none; width: 100%; font-weight: 700;" onclick="openModal('signup')">Apply Now <i class="fa-solid fa-arrow-trend-up" style="margin-left: 5px;"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Choose Us Section -->
+    <section class="why-choose">
+        <div class="container">
+            <div class="section-header">
+                <h2>Why Choose Finkart</h2>
+                <p>We do not just process loans, we guide you to the right loan with clarity, speed, and complete support at every step.</p>
+            </div>
+
+            <div class="why-choose-grid">
+                <div class="why-choose-card">
+                    <div class="why-icon"><i class="fa-solid fa-bolt"></i></div>
+                    <h3>Fast Processing</h3>
+                    <p>Quick document checks and rapid follow-up so your application moves without delays.</p>
+                </div>
+                <div class="why-choose-card">
+                    <div class="why-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+                    <h3>Transparent Guidance</h3>
+                    <p>Clear explanation of eligibility, rates, charges, and repayment before you decide.</p>
+                </div>
+                <div class="why-choose-card">
+                    <div class="why-icon"><i class="fa-solid fa-building-columns"></i></div>
+                    <h3>Multiple Partner Options</h3>
+                    <p>Compare offers from leading banks and NBFCs to choose what suits your profile best.</p>
+                </div>
+                <div class="why-choose-card">
+                    <div class="why-icon"><i class="fa-solid fa-headset"></i></div>
+                    <h3>Dedicated Expert Support</h3>
+                    <p>A real advisor stays with you from inquiry to disbursal for a stress-free experience.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="services">
+        <div class="container">
+            <div class="section-header">
+                <h2>Our Loan Services</h2>
+                <p>Tailored financial solutions designed specifically for your unique needs.</p>
+            </div>
+            
+            <div class="services-grid">
+                
+                <div class="service-card" onclick="openInquiryModal('Personal Loan')">
+                    <div class="service-icon"><i class="fa-solid fa-user-tie"></i></div>
+                    <h3>Personal Loan</h3>
+                    <p>Instant approvals with minimal documentation for your personal needs.</p>
+                </div>
+                
+                <div class="service-card" onclick="openInquiryModal('Unsecured Business Loan')">
+                    <div class="service-icon"><i class="fa-solid fa-briefcase"></i></div>
+                    <h3>Unsecured Business Loan</h3>
+                    <p>Scale your business to new heights with collateral-free funding.</p>
+                </div>
+
+                <div class="service-card" onclick="openInquiryModal('Home Loan')">
+                    <div class="service-icon"><i class="fa-solid fa-house"></i></div>
+                    <h3>Home Loan</h3>
+                    <p>Make your dream home a reality with competitive rates and easy EMIs.</p>
+                </div>
+
+                <div class="service-card" onclick="openInquiryModal('LAP for Business')">
+                    <div class="service-icon"><i class="fa-solid fa-building-columns"></i></div>
+                    <h3>LAP for Business</h3>
+                    <p>Unlock the value of your property for big-ticket business expenses.</p>
+                </div>
+
+                <div class="service-card" onclick="openInquiryModal('Car Loan')">
+                    <div class="service-icon"><i class="fa-solid fa-car"></i></div>
+                    <h3>Car Loan</h3>
+                    <p>Drive home your favorite car with up to 100% on-road financing.</p>
+                </div>
+                
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- Interest Rates Section -->
+    <section id="rates" class="rates-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Top Partner Banks & NBFCs</h2>
+                <p>Compare the best loan offers from our trusted financial partners.</p>
+            </div>
+            
+            <div class="rates-grid">
+                
+                <!-- HDFC Bank -->
+                <div class="rate-card">
+                    <div class="rate-card-header">
+                        <div class="bank-info">
+                            <div class="bank-logo">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/2/28/HDFC_Bank_Logo.svg" alt="HDFC Bank" onerror="this.src='https://ui-avatars.com/api/?name=HDFC+Bank&background=F8FAFC&color=0F172A&bold=true'">
+                            </div>
+                            <h3 class="bank-name">HDFC Bank</h3>
+                        </div>
+                        <div class="rate-arrow">
+                            <i class="fa-solid fa-arrow-right" style="transform: rotate(-45deg);"></i>
+                        </div>
+                    </div>
+                    <div class="rate-card-body">
+                        <div class="rate-item">
+                            <span class="rate-label">STARTING FROM</span>
+                            <span class="rate-value" style="color: #1E1B4B;">8.50%</span>
+                        </div>
+                        <div class="rate-divider"></div>
+                        <div class="rate-item text-right">
+                            <span class="rate-label">MAX RATE</span>
+                            <span class="rate-value" style="color: #64748B; font-size: 20px;">9.40%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ICICI Bank -->
+                <div class="rate-card">
+                    <div class="rate-card-header">
+                        <div class="bank-info">
+                            <div class="bank-logo">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/1/12/ICICI_Bank_Logo.svg" alt="ICICI Bank" onerror="this.src='https://ui-avatars.com/api/?name=ICICI+Bank&background=F8FAFC&color=0F172A&bold=true'">
+                            </div>
+                            <h3 class="bank-name">ICICI Bank</h3>
+                        </div>
+                        <div class="rate-arrow">
+                            <i class="fa-solid fa-arrow-right" style="transform: rotate(-45deg);"></i>
+                        </div>
+                    </div>
+                    <div class="rate-card-body">
+                        <div class="rate-item">
+                            <span class="rate-label">STARTING FROM</span>
+                            <span class="rate-value" style="color: #1E1B4B;">8.75%</span>
+                        </div>
+                        <div class="rate-divider"></div>
+                        <div class="rate-item text-right">
+                            <span class="rate-label">MAX RATE</span>
+                            <span class="rate-value" style="color: #64748B; font-size: 20px;">9.50%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Punjab National Bank -->
+                <div class="rate-card">
+                    <div class="rate-card-header">
+                        <div class="bank-info">
+                            <div class="bank-logo">
+                                <img src="pnb.jpeg" alt="Punjab National Bank" onerror="this.src='https://ui-avatars.com/api/?name=PNB&background=F8FAFC&color=0F172A&bold=true'">
+                            </div>
+                            <h3 class="bank-name">Punjab National Bank</h3>
+                        </div>
+                        <div class="rate-arrow">
+                            <i class="fa-solid fa-arrow-right" style="transform: rotate(-45deg);"></i>
+                        </div>
+                    </div>
+                    <div class="rate-card-body">
+                        <div class="rate-item">
+                            <span class="rate-label">STARTING FROM</span>
+                            <span class="rate-value" style="color: #1E1B4B;">8.45%</span>
+                        </div>
+                        <div class="rate-divider"></div>
+                        <div class="rate-item text-right">
+                            <span class="rate-label">MAX RATE</span>
+                            <span class="rate-value" style="color: #64748B; font-size: 20px;">9.25%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bank of Baroda -->
+                <div class="rate-card">
+                    <div class="rate-card-header">
+                        <div class="bank-info">
+                            <div class="bank-logo">
+                                <img src="bob.jpg" alt="Bank of Baroda" onerror="this.src='https://ui-avatars.com/api/?name=Bank+of+Baroda&background=F8FAFC&color=0F172A&bold=true'">
+                            </div>
+                            <h3 class="bank-name">Bank of Baroda</h3>
+                        </div>
+                        <div class="rate-arrow">
+                            <i class="fa-solid fa-arrow-right" style="transform: rotate(-45deg);"></i>
+                        </div>
+                    </div>
+                    <div class="rate-card-body">
+                        <div class="rate-item">
+                            <span class="rate-label">STARTING FROM</span>
+                            <span class="rate-value" style="color: #1E1B4B;">8.40%</span>
+                        </div>
+                        <div class="rate-divider"></div>
+                        <div class="rate-item text-right">
+                            <span class="rate-label">MAX RATE</span>
+                            <span class="rate-value" style="color: #64748B; font-size: 20px;">9.20%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bajaj Housing Finance -->
+                <div class="rate-card">
+                    <div class="rate-card-header">
+                        <div class="bank-info">
+                            <div class="bank-logo">
+                                <img src="bajaj.png" alt="Bajaj Housing Finance" onerror="this.src='https://ui-avatars.com/api/?name=Bajaj&background=F8FAFC&color=0F172A&bold=true'">
+                            </div>
+                            <h3 class="bank-name">Bajaj Housing Finance</h3>
+                        </div>
+                        <div class="rate-arrow">
+                            <i class="fa-solid fa-arrow-right" style="transform: rotate(-45deg);"></i>
+                        </div>
+                    </div>
+                    <div class="rate-card-body">
+                        <div class="rate-item">
+                            <span class="rate-label">STARTING FROM</span>
+                            <span class="rate-value" style="color: #1E1B4B;">8.50%</span>
+                        </div>
+                        <div class="rate-divider"></div>
+                        <div class="rate-item text-right">
+                            <span class="rate-label">MAX RATE</span>
+                            <span class="rate-value" style="color: #64748B; font-size: 20px;">10.50%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LIC Housing Finance -->
+                <div class="rate-card">
+                    <div class="rate-card-header">
+                        <div class="bank-info">
+                            <div class="bank-logo">
+                                <img src="lic.png" alt="LIC Housing Finance" onerror="this.src='https://ui-avatars.com/api/?name=LIC&background=F8FAFC&color=0F172A&bold=true'">
+                            </div>
+                            <h3 class="bank-name">LIC Housing Finance</h3>
+                        </div>
+                        <div class="rate-arrow">
+                            <i class="fa-solid fa-arrow-right" style="transform: rotate(-45deg);"></i>
+                        </div>
+                    </div>
+                    <div class="rate-card-body">
+                        <div class="rate-item">
+                            <span class="rate-label">STARTING FROM</span>
+                            <span class="rate-value" style="color: #1E1B4B;">8.45%</span>
+                        </div>
+                        <div class="rate-divider"></div>
+                        <div class="rate-item text-right">
+                            <span class="rate-label">MAX RATE</span>
+                            <span class="rate-value" style="color: #64748B; font-size: 20px;">10.25%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SBI -->
+                <div class="rate-card">
+                    <div class="rate-card-header">
+                        <div class="bank-info">
+                            <div class="bank-logo">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/c/cc/SBI-logo.svg" alt="SBI" onerror="this.src='https://ui-avatars.com/api/?name=SBI&background=F8FAFC&color=0F172A&bold=true'">
+                            </div>
+                            <h3 class="bank-name">SBI</h3>
+                        </div>
+                        <div class="rate-arrow">
+                            <i class="fa-solid fa-arrow-right" style="transform: rotate(-45deg);"></i>
+                        </div>
+                    </div>
+                    <div class="rate-card-body">
+                        <div class="rate-item">
+                            <span class="rate-label">STARTING FROM</span>
+                            <span class="rate-value" style="color: #1E1B4B;">8.40%</span>
+                        </div>
+                        <div class="rate-divider"></div>
+                        <div class="rate-item text-right">
+                            <span class="rate-label">MAX RATE</span>
+                            <span class="rate-value" style="color: #64748B; font-size: 20px;">9.05%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Axis Bank -->
+                <div class="rate-card">
+                    <div class="rate-card-header">
+                        <div class="bank-info">
+                            <div class="bank-logo">
+                                <img src="axis.png" alt="Axis Bank" onerror="this.src='https://ui-avatars.com/api/?name=Axis+Bank&background=F8FAFC&color=0F172A&bold=true'">
+                            </div>
+                            <h3 class="bank-name">Axis Bank</h3>
+                        </div>
+                        <div class="rate-arrow">
+                            <i class="fa-solid fa-arrow-right" style="transform: rotate(-45deg);"></i>
+                        </div>
+                    </div>
+                    <div class="rate-card-body">
+                        <div class="rate-item">
+                            <span class="rate-label">STARTING FROM</span>
+                            <span class="rate-value" style="color: #1E1B4B;">8.80%</span>
+                        </div>
+                        <div class="rate-divider"></div>
+                        <div class="rate-item text-right">
+                            <span class="rate-label">MAX RATE</span>
+                            <span class="rate-value" style="color: #64748B; font-size: 20px;">9.50%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kotak Mahindra -->
+                <div class="rate-card">
+                    <div class="rate-card-header">
+                        <div class="bank-info">
+                            <div class="bank-logo">
+                                <img src="kotak.png" alt="Kotak Mahindra Bank" onerror="this.src='https://ui-avatars.com/api/?name=Kotak&background=F8FAFC&color=0F172A&bold=true'">
+                            </div>
+                            <h3 class="bank-name">Kotak Mahindra Bank</h3>
+                        </div>
+                        <div class="rate-arrow">
+                            <i class="fa-solid fa-arrow-right" style="transform: rotate(-45deg);"></i>
+                        </div>
+                    </div>
+                    <div class="rate-card-body">
+                        <div class="rate-item">
+                            <span class="rate-label">STARTING FROM</span>
+                            <span class="rate-value" style="color: #1E1B4B;">8.70%</span>
+                        </div>
+                        <div class="rate-divider"></div>
+                        <div class="rate-item text-right">
+                            <span class="rate-label">MAX RATE</span>
+                            <span class="rate-value" style="color: #64748B; font-size: 20px;">9.35%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <p style="grid-column: 1 / -1; text-align: center; margin-top: 8px; color: #ffffff; background: var(--primary-dark); display: inline-block; justify-self: center; padding: 8px 14px; border-radius: 999px; font-weight: 700;">We have 100+ more trusted partners.</p>
+                
+            </div>
+        </div>
+    </section>
+
+    <!-- Werize Section -->
+    <section id="werize" class="werize-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Our Premium Lending Partner</h2>
+                <p>We partner with leading financial platforms to offer you fast and reliable borrowing solutions.</p>
+            </div>
+            
+            <div class="werize-partnership-container">
+                <div class="werize-main-card">
+                    <div class="werize-badge">Featured Partner</div>
+                    <div class="werize-partner-header">
+                        <div class="werize-partner-logo">
+                            <span class="werize-logo-text">We<span>Rize</span></span>
+                        </div>
+                        <h3 class="werize-partner-title">Wortheasy Technologies (WeRize) Partnership</h3>
+                    </div>
+                    
+                    <p class="werize-partnership-desc">
+                        Finkart is proud to collaborate with WeRize, India's premier full-stack financial services platform. Together, we bring transparent, rapid, and tailored credit solutions directly to you.
+                    </p>
+                    
+                    <div class="werize-loans-grid">
+                        <!-- Personal Loan Card -->
+                        <div class="werize-loan-card active-card">
+                            <div class="werize-loan-icon"><i class="fa-solid fa-user-tie"></i></div>
+                            <h4>Personal Loan</h4>
+                            <p>Instant personal funding with a 100% digital journey, quick verification, and disbursal straight to your account.</p>
+                            <a href="https://partner.werize.com/leadForm" target="_blank" rel="noopener noreferrer" class="btn-primary werize-apply-btn">Apply Online <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                        </div>
+                        
+                        <!-- Unsecured Business Loan Card -->
+                        <div class="werize-loan-card active-card">
+                            <div class="werize-loan-icon"><i class="fa-solid fa-briefcase"></i></div>
+                            <h4>Unsecured Business Loan</h4>
+                            <p>Collateral-free business credit for expanding operations, purchasing inventory, or managing cash flows.</p>
+                            <a href="https://partner.werize.com/unSecured/createApplication" target="_blank" rel="noopener noreferrer" class="btn-primary werize-apply-btn">Apply Online <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                        </div>
+                        
+                        <!-- LAP for Business Card -->
+                        <div class="werize-loan-card active-card">
+                            <div class="werize-loan-icon"><i class="fa-solid fa-building-columns"></i></div>
+                            <h4>LAP for Business</h4>
+                            <p>High-value Loan Against Property tailored for business needs with competitive interest rates and flexible tenures.</p>
+                            <a href="https://partner.werize.com/Sbl_LeadForm" target="_blank" rel="noopener noreferrer" class="btn-primary werize-apply-btn">Apply Online <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Blogs Section -->
+    <section id="blogs" class="blogs-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Financial Insights & Blog</h2>
+                <p>Stay informed with our expert guidance, financial tips, and market updates.</p>
+            </div>
+            
+            <div class="blogs-grid">
+                <!-- Blog 1 -->
+                <article class="blog-card">
+                    <img src="https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=600&q=80" alt="Credit score tips" class="blog-img">
+                    <div class="blog-content">
+                        <span class="blog-category">Credit Score</span>
+                        <h3 class="blog-title">5 Simple Ways to Boost Your Credit Score Fast</h3>
+                        <p class="blog-excerpt">A high credit score is your golden ticket to lower interest rates. Discover five practical habits that can elevate your score in just a few months.</p>
+                        <div class="blog-footer">
+                            <span>June 10, 2026</span>
+                            <span class="blog-read-more" onclick="openExpertModal()">Get Expert Advice <i class="fa-solid fa-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Blog 2 -->
+                <article class="blog-card">
+                    <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=600&q=80" alt="Home loan guide" class="blog-img">
+                    <div class="blog-content">
+                        <span class="blog-category">Home Loan</span>
+                        <h3 class="blog-title">The Ultimate Step-by-Step Home Loan Guide</h3>
+                        <p class="blog-excerpt">Buying your dream home is exciting but navigating loan approvals can be complex. Learn how to verify eligibility, prepare documents, and avoid delays.</p>
+                        <div class="blog-footer">
+                            <span>June 08, 2026</span>
+                            <span class="blog-read-more" onclick="openExpertModal()">Get Expert Advice <i class="fa-solid fa-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Blog 3 -->
+                <article class="blog-card">
+                    <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=600&q=80" alt="Business loan advice" class="blog-img">
+                    <div class="blog-content">
+                        <span class="blog-category">Business Loan</span>
+                        <h3 class="blog-title">How to Secure a Business Loan Without Collateral</h3>
+                        <p class="blog-excerpt">Need funds to scale your business? Collateral-free loans are a fantastic option. We break down what lenders look for in your business profile.</p>
+                        <div class="blog-footer">
+                            <span>June 05, 2026</span>
+                            <span class="blog-read-more" onclick="openExpertModal()">Get Expert Advice <i class="fa-solid fa-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Blog 4 -->
+                <article class="blog-card">
+                    <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80" alt="Interest rates info" class="blog-img">
+                    <div class="blog-content">
+                        <span class="blog-category">Interest Rates</span>
+                        <h3 class="blog-title">Fixed vs. Floating Interest Rates: Which is Better?</h3>
+                        <p class="blog-excerpt">Should you lock in a fixed rate or opt for a floating one that changes with market conditions? Compare the pros, cons, and risks of each approach.</p>
+                        <div class="blog-footer">
+                            <span>June 01, 2026</span>
+                            <span class="blog-read-more" onclick="openExpertModal()">Get Expert Advice <i class="fa-solid fa-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Blog 5 -->
+                <article class="blog-card">
+                    <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80" alt="Personal loan tips" class="blog-img">
+                    <div class="blog-content">
+                        <span class="blog-category">Personal Loan</span>
+                        <h3 class="blog-title">Understanding the True Cost of a Personal Loan</h3>
+                        <p class="blog-excerpt">Personal loans are convenient for emergencies, but processing fees, pre-closure charges, and interest rates add up. Here is what to check.</p>
+                        <div class="blog-footer">
+                            <span>May 28, 2026</span>
+                            <span class="blog-read-more" onclick="openExpertModal()">Get Expert Advice <i class="fa-solid fa-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Blog 6 -->
+                <article class="blog-card">
+                    <img src="https://images.unsplash.com/photo-1582407947304-fd86f028f716?auto=format&fit=crop&w=600&q=80" alt="Loan against property" class="blog-img">
+                    <div class="blog-content">
+                        <span class="blog-category">Property Loan</span>
+                        <h3 class="blog-title">Loan Against Property (LAP): Features & Eligibility</h3>
+                        <p class="blog-excerpt">Unlock the hidden financial value of your residential or commercial property. Find out how LAP offers lower rates and high loan amounts.</p>
+                        <div class="blog-footer">
+                            <span>May 25, 2026</span>
+                            <span class="blog-read-more" onclick="openExpertModal()">Get Expert Advice <i class="fa-solid fa-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <!-- Callback and Expert panel -->
+            <div class="blog-expert-widget">
+                <div class="blog-expert-info">
+                    <h3>Need Expert Advice?</h3>
+                    <p>Have questions about loan eligibility, documentation, or interest rates? Connect with our dedicated financial advisors for a free consultation.</p>
+                    
+                    <div class="blog-expert-contact">
+                        <a href="tel:8586888863" class="blog-expert-card">
+                            <div class="blog-expert-icon"><i class="fa-solid fa-phone"></i></div>
+                            <div class="blog-expert-details">
+                                <span class="blog-expert-label">Call Support Line 1</span>
+                                <span class="blog-expert-number">+91 8586888863</span>
+                            </div>
+                        </a>
+                        <a href="tel:9654515546" class="blog-expert-card">
+                            <div class="blog-expert-icon"><i class="fa-solid fa-phone"></i></div>
+                            <div class="blog-expert-details">
+                                <span class="blog-expert-label">Call Support Line 2</span>
+                                <span class="blog-expert-number">+91 9654515546</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="blog-expert-form-container">
+                    <h4 style="font-size: 20px; margin-bottom: 20px; font-family: var(--font-heading); color: var(--text-dark);">Request a Free Callback</h4>
+                    <form id="form-blog-consultation" class="blog-consultation-form">
+                        <div class="form-row">
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label for="blog-name">Full Name</label>
+                                <input type="text" id="blog-name" placeholder="John Doe" required>
+                            </div>
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label for="blog-phone">Phone Number</label>
+                                <input type="tel" id="blog-phone" placeholder="9876543210" pattern="[0-9]{10}" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label for="blog-email">Email Address</label>
+                                <input type="email" id="blog-email" placeholder="you@example.com" required>
+                            </div>
+                            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                <label for="blog-loan-type">Interested Loan</label>
+                                <select id="blog-loan-type" required>
+                                    <option value="" selected disabled>Select loan type</option>
+                                    <option value="Personal Loan">Personal Loan</option>
+                                    <option value="Home Loan">Home Loan</option>
+                                    <option value="Unsecured Business Loan">Unsecured Business Loan</option>
+                                    <option value="LAP for Business">LAP for Business</option>
+                                    <option value="Car Loan">Car Loan</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary" style="width: 100%; padding: 14px; margin-top: 10px; font-size: 15px;">Submit Details <i class="fa-solid fa-arrow-right" style="margin-left: 8px;"></i></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Us content is on about.html -->
+
+
+    <!-- Connectivity Section -->
+    <section id="connectivity" class="connectivity-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Stay Connected With Us</h2>
+                <p>Follow Finkart Financial Solutions for loan updates, expert tips, and financial guidance.</p>
+            </div>
+
+            <div class="social-only-row">
+                <a class="social-icon-btn whatsapp" href="#" aria-label="WhatsApp">
+                    <i class="fa-brands fa-whatsapp"></i>
+                </a>
+                <a class="social-icon-btn telegram" href="#" aria-label="Telegram">
+                    <i class="fa-brands fa-telegram"></i>
+                </a>
+                <a class="social-icon-btn x-social" href="#" aria-label="X">
+                    <span class="x-logo-text">X</span>
+                </a>
+                <a class="social-icon-btn instagram" href="https://www.instagram.com/finkartfinancialsolutions?igsh=b2diZnJ4MG01M3lo&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                    <i class="fa-brands fa-instagram"></i>
+                </a>
+                <a class="social-icon-btn linkedin" href="#" aria-label="LinkedIn">
+                    <i class="fa-brands fa-linkedin-in"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <div class="brand-container footer-brand">
+                        <a href="#home" aria-label="Go to home" style="display: inline-flex; align-items: center; gap: 12px; text-decoration: none;">
+                            <img src="logo.png" alt="Finkart Logo" class="brand-img">
+                            <img src="logo-text.png" alt="Finkart Text" class="brand-text-img">
+                        </a>
+                    </div>
+                    <p>Your trusted financial partner offering state-of-the-art digital loan solutions. Empowering millions to achieve their financial goals through transparent and easy processes.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Our Services</h4>
+                    <ul class="footer-links">
+                        <li><a href="#services">Personal Loan</a></li>
+                        <li><a href="#services">Home Loan</a></li>
+                        <li><a href="#services">Unsecured Business Loan</a></li>
+                        <li><a href="#services">LAP for Business</a></li>
+                        <li><a href="#services">Car Loan</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Company</h4>
+                    <ul class="footer-links">
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                        <li><a href="#">Partners</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Terms of Service</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Security</a></li>
+                        <li><a href="#">Disclaimer</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Our Address</h4>
+                    <p style="line-height: 1.7; color: rgba(255,255,255,0.85); margin: 0;">
+                        <a href="https://www.google.com/maps/search/?api=1&query=H-5%202nd%20floor%20D-36%20Noida%20Sector%202%2C%20Uttar%20Pradesh%20201301" target="_blank" rel="noopener noreferrer" style="color: #ffffff; text-decoration: none;">
+                            <i class="fa-solid fa-location-dot" style="margin-right: 8px; color: #60a5fa;"></i>
+                            H-5 2nd Floor D-36, Noida Sector 2,<br>
+                            Uttar Pradesh, 201301
+                        </a>
+                    </p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                &copy; 2026 Finkart Financial Services. All Rights Reserved.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Authentication Modal (Login / Signup) -->
+    <div class="modal-overlay" id="auth-modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="tab-login" onclick="switchAuthMode('login')">Log In</button>
+                <button class="auth-tab" id="tab-signup" onclick="switchAuthMode('signup')">Sign Up</button>
+            </div>
+            
+            <!-- Login Form -->
+            <form id="form-login" class="auth-form active">
+                <div class="form-group">
+                    <label for="login-email">Email Address</label>
+                    <input type="email" id="login-email" placeholder="you@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required>
+                </div>
+                <div style="text-align: right; margin-bottom: 20px;">
+                    <a href="#" id="forgot-password-link" style="font-size: 13px; color: var(--primary-color);">Forgot Password?</a>
+                </div>
+                <button type="submit" class="btn-primary auth-btn">Log In Securely</button>
+                <div class="auth-switch">
+                    Don't have an account? <a onclick="switchAuthMode('signup')">Sign Up</a>
+                </div>
+            </form>
+            
+            <!-- Signup Form -->
+            <form id="form-signup" class="auth-form">
+                <div class="form-group">
+                    <label for="signup-name">Full Name</label>
+                    <input type="text" id="signup-name" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-email">Email Address</label>
+                    <input type="email" id="signup-email" placeholder="you@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-phone">Mobile Number</label>
+                    <input type="tel" id="signup-phone" placeholder="9876543210" pattern="[0-9]{10}" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Create Password</label>
+                    <input type="password" id="signup-password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required minlength="8" title="Use at least 8 characters with uppercase, lowercase, number, and special character.">
+                </div>
+                <button type="submit" class="btn-primary auth-btn">Create Account</button>
+                <div class="auth-switch">
+                    Already have an account? <a onclick="switchAuthMode('login')">Log In</a>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="modal-overlay" id="forgot-password-modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeForgotPasswordModal()"><i class="fa-solid fa-xmark"></i></button>
+            <h3 style="margin-bottom: 10px; font-size: 24px; text-align: center; font-family: var(--font-heading);">Forgot Password</h3>
+            <p style="color: var(--text-light); text-align: center; margin-bottom: 20px;">Enter your registered email to request password reset assistance.</p>
+            <form id="form-forgot-password" class="auth-form active">
+                <div class="form-group">
+                    <label for="forgot-email">Email Address</label>
+                    <input type="email" id="forgot-email" placeholder="you@example.com" required>
+                </div>
+                <button type="submit" class="btn-primary auth-btn">Send Reset Request</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Inquiry Modal -->
+    <div class="modal-overlay" id="inquiry-modal">
+        <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
+            <button class="close-modal" onclick="closeInquiryModal()"><i class="fa-solid fa-xmark"></i></button>
+            <h3 style="margin-bottom: 20px; font-size: 24px; text-align: center; font-family: var(--font-heading);">Loan Inquiry</h3>
+            <form id="form-inquiry" class="auth-form active">
+                <div class="form-group">
+                    <label for="inquiry-name">Full Name</label>
+                    <input type="text" id="inquiry-name" placeholder="John Doe" required>
+                </div>
+                <div style="display: flex; gap: 15px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="inquiry-phone">Phone Number</label>
+                        <input type="tel" id="inquiry-phone" placeholder="9876543210" pattern="[0-9]{10}" required>
+                    </div>
+                    <div class="form-group" style="width: 100px;">
+                        <label for="inquiry-age">Age</label>
+                        <input type="number" id="inquiry-age" placeholder="25" min="18" max="100" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="inquiry-email">Email Address</label>
+                    <input type="email" id="inquiry-email" placeholder="you@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="inquiry-type">Loan Type</label>
+                    <select id="inquiry-type" required>
+                        <option value="" selected disabled>Select loan type</option>
+                        <option value="Personal Loan">Personal Loan</option>
+                        <option value="Home Loan">Home Loan</option>
+                        <option value="Unsecured Business Loan">Unsecured Business Loan</option>
+                        <option value="LAP for Business">LAP for Business</option>
+                        <option value="Car Loan">Car Loan</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="inquiry-desc">Description</label>
+                    <textarea id="inquiry-desc" placeholder="Briefly describe your requirements..." rows="3" style="resize: vertical;"></textarea>
+                </div>
+                <button type="submit" class="btn-primary auth-btn">Submit Inquiry <i class="fa-solid fa-paper-plane" style="margin-left: 8px;"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Talk to Expert Modal -->
+    <div class="modal-overlay" id="expert-modal">
+        <div class="modal-content expert-modal-content">
+            <button class="close-modal" onclick="closeExpertModal()"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div class="expert-icon">
+                <i class="fa-solid fa-user-tie"></i>
+            </div>
+            <h3 style="font-size: 24px; margin-bottom: 8px;">Talk to Our Financial Experts</h3>
+            <p style="color: var(--text-light); margin-bottom: 20px;">We are here to help you navigate your financial journey.</p>
+            
+            <div class="contact-numbers">
+                <a href="tel:8586888863" class="contact-card">
+                    <div class="contact-icon"><i class="fa-solid fa-phone"></i></div>
+                    <div class="contact-details">
+                        <span class="contact-label">Expert Line 1</span>
+                        <span class="contact-number">+91 8586888863</span>
+                    </div>
+                </a>
+                
+                <a href="tel:9654515546" class="contact-card">
+                    <div class="contact-icon"><i class="fa-solid fa-phone"></i></div>
+                    <div class="contact-details">
+                        <span class="contact-label">Expert Line 2</span>
+                        <span class="contact-number">+91 9654515546</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-popup" class="app-popup"></div>
+
+    <!-- ===== LOAN ELIGIBILITY POPUP WIDGET (FAB + 3-loan-type calculator modal, shows after 5s) ===== -->
+    <div id="finkart-eligibility-widget">
+<!-- =========================================================
+     FLOATING ACTION BUTTON (embed this in your site)
+     ========================================================= -->
+<button id="elig-fab" onclick="openEligibilityModal()">
+  <i class="fa-solid fa-calculator"></i>
+  Check Eligibility
+</button>
+
+
+<!-- =========================================================
+     LOAN ELIGIBILITY MODAL
+     ========================================================= -->
+<div id="elig-overlay" role="dialog" aria-modal="true" aria-label="Loan Eligibility Checker">
+  <div class="elig-modal">
+
+    <!-- Close -->
+    <button class="elig-close" onclick="closeEligibilityModal()" aria-label="Close">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <!-- Header (always visible) -->
+    <div class="elig-header">
+      <div class="badge"><i class="fa-solid fa-shield-check"></i> Free Eligibility Check</div>
+      <h2 id="modal-title">Which loan are you looking for?</h2>
+      <p id="modal-subtitle">Get an instant estimate — no documents needed</p>
+    </div>
+
+    <!-- ── STEP 1: Loan selector ── -->
+    <div id="step-select">
+      <div class="loan-cards">
+
+        <div class="loan-card personal" onclick="selectLoan('personal')" tabindex="0" role="button"
+             onkeydown="if(event.key==='Enter')selectLoan('personal')">
+          <div class="lc-icon"><i class="fa-solid fa-user"></i></div>
+          <h3>Personal Loan</h3>
+          <p>Up to ₹40L · Fast disbursal · Minimal docs</p>
+        </div>
+
+        <div class="loan-card business" onclick="selectLoan('business')" tabindex="0" role="button"
+             onkeydown="if(event.key==='Enter')selectLoan('business')">
+          <div class="lc-icon"><i class="fa-solid fa-briefcase"></i></div>
+          <h3>Business Loan</h3>
+          <p>Up to ₹2Cr · GST/ITR verified · Quick sanction</p>
+        </div>
+
+        <div class="loan-card home" onclick="selectLoan('home')" tabindex="0" role="button"
+             onkeydown="if(event.key==='Enter')selectLoan('home')">
+          <div class="lc-icon"><i class="fa-solid fa-house"></i></div>
+          <h3>Home Loan</h3>
+          <p>Up to ₹5Cr · 30-year tenure · Low EMI</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── STEP 2: Form ── -->
+    <div id="step-form">
+      <button class="form-back" onclick="goToSelect()">
+        <i class="fa-solid fa-arrow-left"></i> Change loan type
+      </button>
+      <div id="form-loan-badge" class="form-loan-badge"></div>
+      <form id="elig-form" onsubmit="return false;" novalidate>
+        <div class="form-grid" id="form-fields"></div>
+        <div class="form-actions">
+          <button type="button" class="btn-reset" onclick="resetForm()">
+            <i class="fa-solid fa-rotate-left"></i> Reset
+          </button>
+          <button type="button" class="btn-primary" onclick="checkEligibility()">
+            Check My Eligibility <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ── STEP 3: Result ── -->
+    <div id="step-result">
+      <div id="result-hero" class="result-hero">
+        <div class="result-status-icon" id="result-icon"></div>
+        <h3 id="result-title"></h3>
+        <div class="result-amount" id="result-amount"></div>
+        <p id="result-subtitle"></p>
+      </div>
+
+      <div class="result-cards" id="result-cards"></div>
+      <div id="result-reasons"></div>
+      <div id="result-tips"></div>
+
+      <!-- Lead capture -->
+      <div class="lead-box" id="lead-box">
+        <h4><i class="fa-solid fa-phone" style="margin-right:6px;"></i>Get a Free Expert Callback</h4>
+        <p>Our loan experts will help you get the best deal within 24 hours.</p>
+        <div class="lead-fields">
+          <input type="text" id="lead-name" placeholder="Full Name" />
+          <input type="tel" id="lead-phone" placeholder="Phone Number" />
+          <input type="email" id="lead-email" placeholder="Email Address" class="full" />
+        </div>
+        <button class="btn-primary" onclick="submitLead()" style="width:100%;padding:13px;">
+          <i class="fa-solid fa-headset" style="margin-right:6px;"></i>
+          Get Callback from Expert
+        </button>
+        <div class="lead-submitted-msg" id="lead-submitted">
+          <i class="fa-solid fa-circle-check" style="margin-right:6px;"></i>
+          Thank you! Our expert will call you shortly.
+        </div>
+      </div>
+
+      <div class="result-actions">
+        <button class="btn-again" onclick="goToSelect()">
+          <i class="fa-solid fa-rotate-left"></i> Check Another Loan
+        </button>
+        <button class="btn-primary" style="flex:1;" onclick="goToForm()">
+          <i class="fa-solid fa-edit"></i> Edit Details
+        </button>
+      </div>
+      <p class="disclaimer">
+        ⓘ This is an indicative estimate only and not a guarantee of approval. Final eligibility
+        is determined by the lending institution based on full verification. Finkart is a
+        financial services intermediary and not a bank or NBFC.
+      </p>
+    </div>
+
+  </div>
+</div>
+    </div>
+    <!-- ===== / LOAN ELIGIBILITY POPUP WIDGET ===== -->
+
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+    <script>
+/* =====================================================
+   CONFIG — change these values to customise behaviour
+   ===================================================== */
+const CONFIG = {
+  popupDelayMs: 5000,             // 5 seconds
+  cooldownHours: 24,              // don't re-show popup for 24 hrs after close
+  storageKeyShown: 'finkart_popup_shown_at',
+  storageKeyLoanType: 'finkart_last_loan_type',
+};
+
+/* =====================================================
+   STATE
+   ===================================================== */
+let currentLoan = null;           // 'personal' | 'business' | 'home'
+let formData = {};                // captured form values
+
+/* =====================================================
+   POPUP TIMING
+   ===================================================== */
+function shouldShowPopup() {
+  const shownAt = localStorage.getItem(CONFIG.storageKeyShown);
+  if (!shownAt) return true;
+  const elapsed = Date.now() - parseInt(shownAt, 10);
+  return elapsed > CONFIG.cooldownHours * 3600 * 1000;
+}
+
+// Schedule the 5-second popup
+if (shouldShowPopup()) {
+  setTimeout(() => {
+    // Only auto-show if overlay is not already open
+    if (!document.getElementById('elig-overlay').classList.contains('active')) {
+      openEligibilityModal(true);
+    }
+  }, CONFIG.popupDelayMs);
+}
+
+/* =====================================================
+   OPEN / CLOSE
+   ===================================================== */
+function openEligibilityModal(isAuto = false) {
+  if (!isAuto) {
+    // If opened manually, restore last loan type if saved
+    const saved = localStorage.getItem(CONFIG.storageKeyLoanType);
+    if (saved) currentLoan = saved;
+  }
+  document.getElementById('elig-overlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  goToSelect();
+}
+
+function closeEligibilityModal() {
+  document.getElementById('elig-overlay').classList.remove('active');
+  document.body.style.overflow = '';
+  localStorage.setItem(CONFIG.storageKeyShown, Date.now().toString());
+}
+
+// Close on backdrop click
+document.getElementById('elig-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeEligibilityModal();
+});
+
+// Close on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeEligibilityModal();
+});
+
+/* =====================================================
+   NAVIGATION BETWEEN STEPS
+   ===================================================== */
+function goToSelect() {
+  show('step-select');
+  hide('step-form');
+  hide('step-result');
+  setModalHeader('Which loan are you looking for?', 'Get an instant estimate — no documents needed');
+}
+
+function goToForm() {
+  show('step-form');
+  hide('step-select');
+  hide('step-result');
+}
+
+function show(id) { document.getElementById(id).style.display = 'block'; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+
+function setModalHeader(title, subtitle) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-subtitle').textContent = subtitle;
+}
+
+/* =====================================================
+   LOAN TYPE SELECTION
+   ===================================================== */
+const LOAN_META = {
+  personal: { label: 'Personal Loan', icon: 'fa-user', class: 'personal' },
+  business: { label: 'Business Loan', icon: 'fa-briefcase', class: 'business' },
+  home:     { label: 'Home Loan',     icon: 'fa-house',    class: 'home' },
+};
+
+function selectLoan(type) {
+  currentLoan = type;
+  localStorage.setItem(CONFIG.storageKeyLoanType, type);
+
+  const meta = LOAN_META[type];
+  const badge = document.getElementById('form-loan-badge');
+  badge.className = `form-loan-badge ${meta.class}`;
+  badge.innerHTML = `<i class="fa-solid ${meta.icon}"></i> ${meta.label}`;
+
+  setModalHeader(
+    `Check ${meta.label} Eligibility`,
+    'Fill in your details — takes under 2 minutes'
+  );
+
+  renderForm(type);
+  goToForm();
+  resetLeadForm();
+}
+
+/* =====================================================
+   FORM FIELD DEFINITIONS
+   ===================================================== */
+const FIELDS = {
+  personal: [
+    { id:'name',        label:'Full Name',          type:'text',   ph:'e.g. Priya Sharma',  full:true },
+    { id:'age',         label:'Age (years)',         type:'number', ph:'e.g. 32' },
+    { id:'empType',     label:'Employment Type',     type:'select', options:['Salaried','Self-Employed','Business Owner','Freelancer'] },
+    { id:'income',      label:'Monthly Income (₹)',  type:'number', ph:'e.g. 60000',
+      tip:'Your in-hand monthly salary or net income after taxes.' },
+    { id:'emis',        label:'Current EMIs / Month (₹)', type:'number', ph:'0 if none',
+      tip:'Total of all active loan EMIs you are paying each month.' },
+    { id:'city',        label:'City',               type:'text',   ph:'e.g. Mumbai' },
+    { id:'cibil',       label:'CIBIL / Credit Score', type:'number', ph:'300–900',
+      tip:'Check your credit score free via BankBazaar, CIBIL, or Paisa Bazaar.' },
+    { id:'loanAmt',     label:'Loan Amount Needed (₹)', type:'number', ph:'e.g. 500000' },
+    { id:'tenure',      label:'Tenure (months)',     type:'number', ph:'e.g. 36' },
+  ],
+  business: [
+    { id:'name',        label:'Full Name',           type:'text',   ph:'e.g. Rahul Gupta', full:true },
+    { id:'age',         label:'Age (years)',          type:'number', ph:'e.g. 38' },
+    { id:'bizType',     label:'Business Type',        type:'select', options:['Proprietorship','Partnership','Pvt Ltd','LLP','Other'] },
+    { id:'income',      label:'Monthly Business Income (₹)', type:'number', ph:'e.g. 200000',
+      tip:'Average monthly revenue or turnover of your business.' },
+    { id:'emis',        label:'Existing EMIs / Month (₹)',   type:'number', ph:'0 if none' },
+    { id:'vintage',     label:'Business Vintage (years)',    type:'number', ph:'e.g. 3',
+      tip:'How many years has your business been registered and operational?' },
+    { id:'city',        label:'City',                type:'text',   ph:'e.g. Delhi' },
+    { id:'cibil',       label:'CIBIL / Credit Score', type:'number', ph:'300–900',
+      tip:'Both personal and business CIBIL scores are considered.' },
+    { id:'loanAmt',     label:'Loan Amount Needed (₹)', type:'number', ph:'e.g. 2000000' },
+    { id:'tenure',      label:'Tenure (months)',     type:'number', ph:'e.g. 60' },
+  ],
+  home: [
+    { id:'name',        label:'Full Name',           type:'text',   ph:'e.g. Amit Verma',  full:true },
+    { id:'age',         label:'Age (years)',          type:'number', ph:'e.g. 35' },
+    { id:'empType',     label:'Employment Type',      type:'select', options:['Salaried','Self-Employed','Business Owner'] },
+    { id:'income',      label:'Monthly Income (₹)',   type:'number', ph:'e.g. 80000',
+      tip:'Co-applicant income can be added for higher eligibility.' },
+    { id:'emis',        label:'Current EMIs / Month (₹)',  type:'number', ph:'0 if none' },
+    { id:'city',        label:'City',                type:'text',   ph:'e.g. Bengaluru' },
+    { id:'cibil',       label:'CIBIL / Credit Score', type:'number', ph:'300–900' },
+    { id:'propValue',   label:'Property Value (₹)',   type:'number', ph:'e.g. 5000000',
+      tip:'Approximate market value of the property you wish to buy.' },
+    { id:'downPayment', label:'Down Payment (₹)',     type:'number', ph:'e.g. 1000000',
+      tip:'Amount you can pay upfront. Banks typically fund 75–90% of property value (LTV).' },
+    { id:'tenure',      label:'Tenure (months)',      type:'number', ph:'e.g. 240',
+      tip:'Home loan tenure can go up to 360 months (30 years).' },
+  ],
+};
+
+/* =====================================================
+   RENDER DYNAMIC FORM
+   ===================================================== */
+function renderForm(type) {
+  const fields = FIELDS[type];
+  const container = document.getElementById('form-fields');
+  container.innerHTML = fields.map(f => {
+    const tipHtml = f.tip
+      ? `<span class="tip" data-tip="${f.tip}">?</span>`
+      : '';
+    const fullClass = f.full ? ' full' : '';
+    let input = '';
+    if (f.type === 'select') {
+      const opts = f.options.map(o => `<option value="${o}">${o}</option>`).join('');
+      input = `<select id="f_${f.id}" required><option value="">Select…</option>${opts}</select>`;
+    } else {
+      input = `<input type="${f.type}" id="f_${f.id}" placeholder="${f.ph}" required ${f.type==='number'?'min="0"':''}>`;
+    }
+    return `
+      <div class="form-group${fullClass}">
+        <label for="f_${f.id}">${f.label}${tipHtml}</label>
+        ${input}
+      </div>`;
+  }).join('');
+}
+
+function resetForm() {
+  document.getElementById('elig-form').reset();
+  document.querySelectorAll('.form-group input, .form-group select').forEach(el => {
+    el.classList.remove('invalid');
+  });
+}
+
+/* =====================================================
+   ELIGIBILITY LOGIC
+   ===================================================== */
+
+/**
+ * Check eligibility based on Indian banking-style rules.
+ * Returns an object: { eligible, maxAmount, emi, interestRange, tenureRange, issues, tips, heroClass }
+ */
+function checkEligibility() {
+  // Validate required fields
+  const fields = FIELDS[currentLoan];
+  let valid = true;
+  fields.forEach(f => {
+    const el = document.getElementById('f_' + f.id);
+    if (!el) return;
+    el.classList.remove('invalid');
+    if (!el.value || (f.type === 'select' && el.value === '')) {
+      el.classList.add('invalid');
+      valid = false;
+    }
+  });
+  if (!valid) { alert('Please fill in all required fields.'); return; }
+
+  // Collect values into formData
+  formData = {};
+  fields.forEach(f => {
+    const el = document.getElementById('f_' + f.id);
+    formData[f.id] = (f.type === 'number') ? parseFloat(el.value) || 0 : el.value;
+  });
+
+  let result;
+  if (currentLoan === 'personal')  result = calcPersonal(formData);
+  if (currentLoan === 'business') result = calcBusiness(formData);
+  if (currentLoan === 'home')     result = calcHome(formData);
+
+  renderResult(result);
+}
+
+/* ── Personal Loan eligibility ── */
+function calcPersonal(d) {
+  const issues = [], tips = [];
+  let score = 100;
+
+  // Age check
+  if (d.age < 21 || d.age > 60) {
+    issues.push('Age must be between 21 and 60 years for most lenders.');
+    score -= 40;
+  }
+
+  // CIBIL check
+  let interestRate;
+  if (d.cibil >= 750) {
+    interestRate = [10.5, 14];
+  } else if (d.cibil >= 650) {
+    interestRate = [14, 18];
+    issues.push('Credit score is in the medium-risk range (650–749). You may get a higher interest rate.');
+    tips.push('Improving your CIBIL to 750+ can reduce your interest rate significantly.');
+    score -= 20;
+  } else {
+    interestRate = [18, 24];
+    issues.push('Low credit score (below 650) significantly reduces approval chances.');
+    tips.push('Pay off existing debts and clear overdue amounts to improve your credit score.');
+    score -= 50;
+  }
+
+  // EMI burden check (FOIR — Fixed Obligation to Income Ratio)
+  const maxEmiCapacity = d.income * 0.50;     // Max 50% of income can go to EMIs
+  const freeCapacity = maxEmiCapacity - d.emis; // Remaining capacity after existing EMIs
+
+  if (d.emis > d.income * 0.40) {
+    issues.push(`Existing EMIs (₹${fmt(d.emis)}) exceed 40% of your income. Banks prefer FOIR below 50%.`);
+    tips.push('Prepay or close smaller loans to reduce your monthly EMI burden.');
+    score -= 25;
+  }
+  if (d.income < 20000) {
+    issues.push('Minimum monthly income of ₹20,000 is usually required for personal loans.');
+    score -= 30;
+  }
+
+  // Calculate eligible amount
+  const avgRate = (interestRate[0] + interestRate[1]) / 2 / 100 / 12;
+  const tenureMonths = Math.min(d.tenure, 60); // Max 60 months personal loan
+  const maxEmiForLoan = Math.max(freeCapacity, 0);
+  let maxAmount = 0;
+  if (avgRate > 0 && maxEmiForLoan > 0) {
+    maxAmount = maxEmiForLoan * (Math.pow(1 + avgRate, tenureMonths) - 1) /
+                (avgRate * Math.pow(1 + avgRate, tenureMonths));
+  }
+  maxAmount = Math.min(maxAmount, 4000000); // Cap at ₹40L
+  maxAmount = Math.round(maxAmount / 1000) * 1000;
+
+  // EMI on max amount
+  const emi = calcEMI(maxAmount, (interestRate[0] + interestRate[1]) / 2, tenureMonths);
+
+  // Tips
+  if (score >= 80) tips.push('Great profile! You may qualify for pre-approved offers from top banks.');
+  if (d.income >= 50000 && d.cibil >= 750) tips.push('You are likely eligible for the lowest interest rates in the market.');
+  tips.push('Compare offers from SBI, HDFC, ICICI, and Bajaj Finance before deciding.');
+
+  const eligible = score >= 60 && maxAmount >= 50000 && d.age >= 21 && d.age <= 60;
+  const partial = !eligible && score >= 40 && maxAmount > 0;
+
+  return {
+    eligible: eligible ? 'eligible' : (partial ? 'partial' : 'not-eligible'),
+    maxAmount: eligible || partial ? maxAmount : 0,
+    emi: eligible || partial ? emi : 0,
+    interestRange: interestRate,
+    tenureRange: [tenureMonths, 60],
+    issues,
+    tips,
+    loanType: 'Personal Loan',
+    icon: 'fa-user',
+  };
+}
+
+/* ── Business Loan eligibility ── */
+function calcBusiness(d) {
+  const issues = [], tips = [];
+  let score = 100;
+
+  if (d.age < 21 || d.age > 60) {
+    issues.push('Promoter age should be between 21 and 65 years.');
+    score -= 30;
+  }
+  if (d.vintage < 2) {
+    issues.push('Most lenders require a minimum business vintage of 2 years.');
+    tips.push('Build business history: file ITR and maintain GST records for 2 consecutive years.');
+    score -= 35;
+  }
+
+  let interestRate;
+  if (d.cibil >= 750) {
+    interestRate = [11, 16];
+  } else if (d.cibil >= 650) {
+    interestRate = [16, 22];
+    issues.push('Business credit score is in the medium risk band (650–749).');
+    score -= 20;
+  } else {
+    interestRate = [22, 28];
+    issues.push('Low CIBIL score may result in loan rejection or very high interest rates.');
+    score -= 45;
+  }
+
+  const maxEmiCapacity = d.income * 0.55; // Businesses allowed up to 55% DSCR
+  const freeCapacity = maxEmiCapacity - d.emis;
+  if (d.emis > d.income * 0.50) {
+    issues.push(`Existing EMIs (₹${fmt(d.emis)}) exceed 50% of monthly business income.`);
+    tips.push('Close high-interest unsecured loans before applying for a business loan.');
+    score -= 20;
+  }
+
+  if (d.income < 50000) {
+    issues.push('Monthly business income of at least ₹50,000 is typically required.');
+    score -= 25;
+  }
+
+  const avgRate = (interestRate[0] + interestRate[1]) / 2 / 100 / 12;
+  const tenureMonths = Math.min(d.tenure, 84); // Max 84 months
+  const maxEmiForLoan = Math.max(freeCapacity, 0);
+  let maxAmount = 0;
+  if (avgRate > 0 && maxEmiForLoan > 0) {
+    maxAmount = maxEmiForLoan * (Math.pow(1 + avgRate, tenureMonths) - 1) /
+                (avgRate * Math.pow(1 + avgRate, tenureMonths));
+  }
+  maxAmount = Math.min(maxAmount, 20000000); // Cap ₹2Cr
+  maxAmount = Math.round(maxAmount / 10000) * 10000;
+
+  const emi = calcEMI(maxAmount, (interestRate[0] + interestRate[1]) / 2, tenureMonths);
+
+  if (score >= 80) tips.push('Excellent profile! You may qualify for MSME priority lending schemes.');
+  tips.push('Prepare last 2 years ITR and 6 months GST returns to get faster approval.');
+  tips.push('MUDRA Loan or CGTMSE-backed loans can help if collateral is unavailable.');
+
+  const eligible = score >= 60 && maxAmount >= 100000 && d.vintage >= 2;
+  const partial = !eligible && score >= 35 && maxAmount > 0;
+
+  return {
+    eligible: eligible ? 'eligible' : (partial ? 'partial' : 'not-eligible'),
+    maxAmount: eligible || partial ? maxAmount : 0,
+    emi: eligible || partial ? emi : 0,
+    interestRange: interestRate,
+    tenureRange: [tenureMonths, 84],
+    issues,
+    tips,
+    loanType: 'Business Loan',
+    icon: 'fa-briefcase',
+  };
+}
+
+/* ── Home Loan eligibility ── */
+function calcHome(d) {
+  const issues = [], tips = [];
+  let score = 100;
+
+  if (d.age < 21 || d.age > 60) {
+    issues.push('Age should be between 21 and 60 at loan disbursal for most banks.');
+    score -= 30;
+  }
+
+  let interestRate;
+  if (d.cibil >= 750) {
+    interestRate = [8.4, 9.5];
+  } else if (d.cibil >= 650) {
+    interestRate = [9.5, 11.5];
+    issues.push('A CIBIL score of 750+ can save you ₹10,000s per year in interest.');
+    tips.push('Improve credit score before applying to unlock the best home loan rates.');
+    score -= 20;
+  } else {
+    interestRate = [11.5, 14];
+    issues.push('Low CIBIL score (below 650) will make home loan approval difficult.');
+    score -= 50;
+  }
+
+  // LTV calculation
+  const loanNeeded = d.propValue - d.downPayment;
+  const ltv = (loanNeeded / d.propValue) * 100;
+
+  // Max LTV rules (RBI guidelines)
+  let maxLTV;
+  if (d.propValue <= 3000000)        maxLTV = 90;
+  else if (d.propValue <= 7500000)   maxLTV = 80;
+  else                                maxLTV = 75;
+
+  if (ltv > maxLTV) {
+    issues.push(`LTV ratio is ${ltv.toFixed(1)}%, but max allowed for this property value is ${maxLTV}%. Please increase your down payment.`);
+    tips.push(`You need a minimum down payment of ₹${fmt(Math.ceil(d.propValue * (1 - maxLTV / 100) / 1000) * 1000)}.`);
+    score -= 30;
+  }
+
+  // Income-based eligibility
+  const maxEmiCapacity = d.income * 0.50;
+  const freeCapacity = maxEmiCapacity - d.emis;
+  if (d.emis > d.income * 0.40) {
+    issues.push(`Existing EMIs (₹${fmt(d.emis)}) already consume more than 40% of your income.`);
+    tips.push('Consider adding a co-applicant (spouse/parent) to increase combined income.');
+    score -= 20;
+  }
+
+  const tenureMonths = Math.min(d.tenure, 360); // Max 30 years
+  const avgRate = (interestRate[0] + interestRate[1]) / 2 / 100 / 12;
+  const maxEmiForLoan = Math.max(freeCapacity, 0);
+
+  // Eligible amount: min of income-based and LTV-based
+  let incomeBasedMax = 0;
+  if (avgRate > 0 && maxEmiForLoan > 0) {
+    incomeBasedMax = maxEmiForLoan * (Math.pow(1 + avgRate, tenureMonths) - 1) /
+                     (avgRate * Math.pow(1 + avgRate, tenureMonths));
+  }
+  const ltvBasedMax = d.propValue * (maxLTV / 100);
+  let maxAmount = Math.min(incomeBasedMax, ltvBasedMax);
+  maxAmount = Math.min(maxAmount, 50000000); // Cap ₹5Cr
+  maxAmount = Math.round(maxAmount / 10000) * 10000;
+
+  const emi = calcEMI(maxAmount, (interestRate[0] + interestRate[1]) / 2, tenureMonths);
+
+  tips.push('Consider PMAY (Pradhan Mantri Awas Yojana) for additional subsidies if you qualify.');
+  tips.push('Compare rates from SBI, HDFC, ICICI, Kotak, and LIC Housing Finance.');
+  if (score >= 80) tips.push('Your profile is strong! You may be eligible for balance transfer offers.');
+
+  const eligible = score >= 60 && maxAmount >= 500000 && ltv <= maxLTV;
+  const partial = !eligible && score >= 40 && maxAmount > 0;
+
+  return {
+    eligible: eligible ? 'eligible' : (partial ? 'partial' : 'not-eligible'),
+    maxAmount: eligible || partial ? maxAmount : 0,
+    emi: eligible || partial ? emi : 0,
+    interestRange: interestRate,
+    tenureRange: [tenureMonths, 360],
+    issues,
+    tips,
+    loanType: 'Home Loan',
+    icon: 'fa-house',
+    ltv: ltv.toFixed(1),
+    maxLTV,
+    loanNeeded,
+  };
+}
+
+/* =====================================================
+   RENDER RESULT
+   ===================================================== */
+function renderResult(r) {
+  const hero = document.getElementById('result-hero');
+  hero.className = 'result-hero ' + r.eligible;
+
+  document.getElementById('result-icon').textContent =
+    r.eligible === 'eligible' ? '✅' : r.eligible === 'partial' ? '⚠️' : '❌';
+
+  document.getElementById('result-title').textContent =
+    r.eligible === 'eligible'
+      ? 'You are likely eligible!'
+      : r.eligible === 'partial'
+      ? 'Partially eligible — lower amount possible'
+      : 'Not eligible at this time';
+
+  document.getElementById('result-amount').textContent =
+    (r.eligible === 'eligible' || r.eligible === 'partial') && r.maxAmount > 0
+      ? `Up to ₹${fmt(r.maxAmount)}`
+      : '';
+
+  document.getElementById('result-subtitle').textContent =
+    r.eligible === 'eligible'
+      ? `Based on your profile, you may qualify for a ${r.loanType} of up to ₹${fmt(r.maxAmount)}.`
+      : r.eligible === 'partial'
+      ? 'You may qualify for a reduced amount. See details below.'
+      : 'Your current profile does not meet standard eligibility criteria. See tips to improve.';
+
+  // Stat cards
+  const cards = document.getElementById('result-cards');
+  const hasLoan = r.maxAmount > 0;
+  cards.innerHTML = `
+    <div class="result-card">
+      <div class="rc-label">Estimated Monthly EMI</div>
+      <div class="rc-value" style="color:var(--primary)">${hasLoan ? '₹'+fmt(Math.round(r.emi)) : '—'}</div>
+    </div>
+    <div class="result-card">
+      <div class="rc-label">Interest Rate Range</div>
+      <div class="rc-value">${r.interestRange[0]}% – ${r.interestRange[1]}% p.a.</div>
+    </div>
+    <div class="result-card">
+      <div class="rc-label">Max Eligible Amount</div>
+      <div class="rc-value">${hasLoan ? '₹'+fmt(r.maxAmount) : 'N/A'}</div>
+    </div>
+    <div class="result-card">
+      <div class="rc-label">Suggested Tenure</div>
+      <div class="rc-value">${r.tenureRange[0]} months</div>
+    </div>
+    ${r.ltv ? `
+    <div class="result-card">
+      <div class="rc-label">LTV Ratio</div>
+      <div class="rc-value" style="color:${r.ltv > r.maxLTV ? 'var(--red)':'var(--green)'}">${r.ltv}% (Max ${r.maxLTV}%)</div>
+    </div>
+    <div class="result-card">
+      <div class="rc-label">Loan Needed</div>
+      <div class="rc-value">₹${fmt(Math.round(r.loanNeeded))}</div>
+    </div>` : ''}
+  `;
+
+  // Issues
+  const reasonsEl = document.getElementById('result-reasons');
+  if (r.issues.length > 0) {
+    reasonsEl.innerHTML = `
+      <div class="reasons-box issues">
+        <h4><i class="fa-solid fa-triangle-exclamation" style="margin-right:6px;"></i>Eligibility Concerns</h4>
+        <ul>${r.issues.map(i => `<li>${i}</li>`).join('')}</ul>
+      </div>`;
+  } else {
+    reasonsEl.innerHTML = '';
+  }
+
+  // Tips
+  const tipsEl = document.getElementById('result-tips');
+  if (r.tips.length > 0) {
+    tipsEl.innerHTML = `
+      <div class="reasons-box tips">
+        <h4><i class="fa-solid fa-lightbulb" style="margin-right:6px;"></i>Tips to Improve / Next Steps</h4>
+        <ul>${r.tips.map(t => `<li>${t}</li>`).join('')}</ul>
+      </div>`;
+  } else {
+    tipsEl.innerHTML = '';
+  }
+
+  // Pre-fill lead name if entered
+  const leadNameEl = document.getElementById('lead-name');
+  if (formData.name && !leadNameEl.value) leadNameEl.value = formData.name;
+
+  // Reset lead submission state
+  document.getElementById('lead-submitted').style.display = 'none';
+  document.getElementById('lead-box').querySelector('.btn-primary').style.display = '';
+  document.getElementById('lead-box').querySelector('.lead-fields').style.display = 'grid';
+
+  setModalHeader(`${r.loanType} Eligibility Result`, 'This is an estimate only');
+
+  hide('step-form');
+  hide('step-select');
+  show('step-result');
+
+  // Scroll modal to top
+  document.querySelector('.elig-modal').scrollTop = 0;
+}
+
+/* =====================================================
+   LEAD FORM SUBMISSION
+   ===================================================== */
+function submitLead() {
+  const name  = document.getElementById('lead-name').value.trim();
+  const phone = document.getElementById('lead-phone').value.trim();
+  const email = document.getElementById('lead-email').value.trim();
+
+  if (!name || !phone) {
+    alert('Please enter your name and phone number.');
+    return;
+  }
+
+  // ── Lead capture: saved via Finkart's existing Firebase pipeline ──
+  const leadPayload = {
+    formType: 'Eligibility Popup',
+    name, phone, email,
+    loanType: currentLoan,
+    formData,
+    createdAt: new Date().toISOString(),
+  };
+  if (typeof window.saveLeadToFirebase === 'function') {
+    window.saveLeadToFirebase(leadPayload);
+  } else {
+    console.log('Finkart Lead Submitted:', leadPayload);
+  }
+  if (typeof window.showPopup === 'function') {
+    window.showPopup('Thanks! Our expert will call you shortly.', 'success');
+  }
+  // ── End lead capture section ──
+
+  document.getElementById('lead-box').querySelector('.lead-fields').style.display = 'none';
+  document.getElementById('lead-box').querySelector('.btn-primary').style.display = 'none';
+  document.getElementById('lead-submitted').style.display = 'block';
+}
+
+function resetLeadForm() {
+  ['lead-name','lead-phone','lead-email'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const submitted = document.getElementById('lead-submitted');
+  if (submitted) submitted.style.display = 'none';
+  const lb = document.getElementById('lead-box');
+  if (lb) {
+    const btn = lb.querySelector('.btn-primary');
+    const fields = lb.querySelector('.lead-fields');
+    if (btn) btn.style.display = '';
+    if (fields) fields.style.display = 'grid';
+  }
+}
+
+/* =====================================================
+   HELPERS
+   ===================================================== */
+
+/** EMI formula: P * r * (1+r)^n / ((1+r)^n - 1) */
+function calcEMI(principal, annualRate, months) {
+  if (!principal || !annualRate || !months) return 0;
+  const r = annualRate / 100 / 12;
+  return principal * r * Math.pow(1 + r, months) / (Math.pow(1 + r, months) - 1);
+}
+
+/** Format number in Indian style with ₹ separators */
+function fmt(n) {
+  if (!n && n !== 0) return '—';
+  return Math.round(n).toLocaleString('en-IN');
+}
+    </script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCI1jodHs-PvTdQWyFb-FY2ssQXATRoK5c",
+  authDomain: "finkart-fe285.firebaseapp.com",
+  projectId: "finkart-fe285",
+  storageBucket: "finkart-fe285.firebasestorage.app",
+  messagingSenderId: "918603552246",
+  appId: "1:918603552246:web:aa44261fb44f4b49a863d7",
+  measurementId: "G-GLE9WXVQ6J"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+window.saveLeadToFirebase = async function(data) {
+  try {
+    await addDoc(collection(db, "leads"), data);
+    console.log("Lead Saved");
+  } catch (error) {
+    console.error("Firebase Error:", error);
+  }
+};
+</script>
+</body>
+</html>
+

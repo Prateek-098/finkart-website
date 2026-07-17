@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finkart – Loan Eligibility Checker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* =====================================================
+       ROOT TOKENS — match Finkart's existing brand palette
+       ===================================================== */
+    :root {
+      --bg: #F8FAFC;
+      --white: #FFFFFF;
+      --primary: #3B82F6;
+      --primary-dark: #2563EB;
+      --brand-grad: linear-gradient(90deg, #140733 0%, #471168 50%, #87149a 100%);
+      --gold: #D4AF37;
+      --green: #10B981;
+      --amber: #F59E0B;
+      --red: #EF4444;
+      --text: #0F172A;
+      --muted: #64748B;
+      --border: #E2E8F0;
+      --hover-bg: #EFF6FF;
+      --radius-sm: 8px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.10);
+      --shadow-lg: 0 20px 40px rgba(0,0,0,0.15);
+      --font-head: 'Outfit', sans-serif;
+      --font-body: 'Inter', sans-serif;
+
+      /* ── Easy to change ── */
+      --popup-delay-ms: 5000;    /* 5 seconds — change here to adjust */
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* =====================================================
+       DEMO PAGE BACKGROUND (remove when embedding)
+       ===================================================== */
+    .demo-page {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .demo-logo {
+      font-family: var(--font-head);
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      background: var(--brand-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+    }
+    .demo-rupee {
+      color: var(--gold);
+      -webkit-text-fill-color: var(--gold);
+    }
+    .demo-hint {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+    .demo-trigger-btn {
+      margin-top: 24px;
+      padding: 12px 28px;
+      background: var(--brand-grad);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-head);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .demo-trigger-btn:hover { opacity: .88; }
+
+    /* =====================================================
+       OVERLAY BACKDROP
+       ===================================================== */
+    #elig-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.65);
+      backdrop-filter: blur(4px);
+      z-index: 9000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .35s ease;
+    }
+    #elig-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* =====================================================
+       MODAL SHELL
+       ===================================================== */
+    .elig-modal {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 680px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      transform: translateY(24px) scale(0.97);
+      transition: transform .35s ease;
+    }
+    #elig-overlay.active .elig-modal {
+      transform: translateY(0) scale(1);
+    }
+
+    .elig-modal::-webkit-scrollbar { width: 6px; }
+    .elig-modal::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 99px; }
+    .elig-modal::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+
+    /* Close button */
+    .elig-close {
+      position: absolute;
+      top: 16px; right: 16px;
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      border: none;
+      background: #f1f5f9;
+      color: var(--muted);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .2s;
+      z-index: 2;
+    }
+    .elig-close:hover { background: #e2e8f0; color: var(--text); }
+
+    /* Modal header */
+    .elig-header {
+      padding: 36px 36px 24px;
+      text-align: center;
+      background: linear-gradient(135deg, #f8f4ff 0%, #eff6ff 100%);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+    .elig-header .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: #ede9fe;
+      color: #6d28d9;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: var(--font-head);
+      margin-bottom: 12px;
+    }
+    .elig-header h2 {
+      font-family: var(--font-head);
+      font-size: 24px;
+      font-weight: 800;
+      background: var(--brand-grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+    .elig-header p {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    /* =====================================================
+       LOAN TYPE SELECTOR (Step 1)
+       ===================================================== */
+    #step-select { padding: 28px 36px 36px; }
+
+    .loan-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 4px;
+    }
+    .loan-card {
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 22px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .25s ease;
+      background: var(--white);
+    }
+    .loan-card:hover {
+      border-color: var(--primary);
+      background: var(--hover-bg);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(59,130,246,0.15);
+    }
+    .loan-card .lc-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      margin: 0 auto 12px;
+    }
+    .loan-card.personal .lc-icon { background: #dbeafe; color: #2563eb; }
+    .loan-card.business .lc-icon { background: #d1fae5; color: #059669; }
+    .loan-card.home .lc-icon     { background: #fef3c7; color: #d97706; }
+    .loan-card h3 {
+      font-family: var(--font-head);
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .loan-card p {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    /* =====================================================
+       FORM STEP (Step 2)
+       ===================================================== */
+    #step-form { display: none; padding: 28px 36px 36px; }
+
+    .form-back {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--primary);
+      cursor: pointer; margin-bottom: 20px;
+      background: none; border: none;
+      font-family: var(--font-body);
+    }
+    .form-back:hover { text-decoration: underline; }
+
+    .form-loan-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-family: var(--font-head);
+      font-size: 13px; font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .form-loan-badge.personal { background: #dbeafe; color: #1d4ed8; }
+    .form-loan-badge.business { background: #d1fae5; color: #065f46; }
+    .form-loan-badge.home     { background: #fef3c7; color: #92400e; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .form-group label .tip {
+      display: inline-block;
+      width: 15px; height: 15px;
+      background: #e2e8f0;
+      border-radius: 50%;
+      font-size: 10px;
+      text-align: center;
+      line-height: 15px;
+      color: var(--muted);
+      cursor: help;
+      margin-left: 4px;
+      position: relative;
+    }
+    /* Tooltip */
+    .tip:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      left: 50%; bottom: calc(100% + 6px);
+      transform: translateX(-50%);
+      background: var(--text);
+      color: white;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      white-space: nowrap;
+      max-width: 200px;
+      white-space: normal;
+      width: 180px;
+      z-index: 99;
+      pointer-events: none;
+    }
+    .tip:hover::before {
+      content: '';
+      position: absolute;
+      left: 50%; bottom: calc(100% + 2px);
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: var(--text);
+      z-index: 99;
+    }
+    .form-group input,
+    .form-group select {
+      padding: 10px 13px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text);
+      background: var(--white);
+      transition: border-color .2s;
+      outline: none;
+    }
+    .form-group input:focus,
+    .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+    .form-group input.invalid { border-color: var(--red); }
+
+    .form-actions {
+      margin-top: 22px;
+      display: flex;
+      gap: 12px;
+    }
+    .btn-primary {
+      flex: 1;
+      padding: 13px;
+      background: var(--brand-grad);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-head);
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .btn-primary:hover { opacity: .88; }
+    .btn-reset {
+      padding: 13px 20px;
+      background: #f1f5f9;
+      color: var(--muted);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-head);
+      font-size: 15px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-reset:hover { background: #e2e8f0; color: var(--text); }
+
+    /* =====================================================
+       RESULT STEP (Step 3)
+       ===================================================== */
+    #step-result { display: none; padding: 28px 36px 36px; }
+
+    .result-hero {
+      border-radius: var(--radius-md);
+      padding: 24px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .result-hero.eligible {
+      background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+      border: 2px solid #6ee7b7;
+    }
+    .result-hero.not-eligible {
+      background: linear-gradient(135deg, #fee2e2, #fecaca);
+      border: 2px solid #fca5a5;
+    }
+    .result-hero.partial {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 2px solid #fcd34d;
+    }
+    .result-status-icon { font-size: 40px; margin-bottom: 8px; }
+    .result-hero h3 {
+      font-family: var(--font-head);
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .result-hero.eligible h3  { color: #065f46; }
+    .result-hero.not-eligible h3 { color: #7f1d1d; }
+    .result-hero.partial h3   { color: #78350f; }
+    .result-hero p { font-size: 13px; color: inherit; opacity: .8; }
+
+    .result-amount {
+      font-family: var(--font-head);
+      font-size: 32px;
+      font-weight: 800;
+      margin: 8px 0 2px;
+    }
+    .result-hero.eligible .result-amount  { color: #047857; }
+    .result-hero.partial .result-amount   { color: #92400e; }
+
+    .result-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .result-card {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+    }
+    .result-card .rc-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .result-card .rc-value {
+      font-family: var(--font-head);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .reasons-box {
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .reasons-box.issues   { background: #fff7ed; border: 1.5px solid #fed7aa; }
+    .reasons-box.tips     { background: #f0fdf4; border: 1.5px solid #bbf7d0; }
+    .reasons-box h4 {
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .reasons-box.issues h4 { color: #c2410c; }
+    .reasons-box.tips h4   { color: #166534; }
+    .reasons-box ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .reasons-box li {
+      font-size: 13px;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .reasons-box.issues li::before { content: '⚠️'; flex-shrink: 0; }
+    .reasons-box.tips li::before   { content: '✅'; flex-shrink: 0; }
+
+    /* Lead capture inside result */
+    .lead-box {
+      background: linear-gradient(135deg, #f8f4ff 0%, #eff6ff 100%);
+      border: 1.5px solid #c4b5fd;
+      border-radius: var(--radius-md);
+      padding: 20px;
+    }
+    .lead-box h4 {
+      font-family: var(--font-head);
+      font-size: 16px;
+      font-weight: 700;
+      color: #5b21b6;
+      margin-bottom: 4px;
+    }
+    .lead-box p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .lead-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .lead-fields input {
+      padding: 10px 12px;
+      border: 1.5px solid #ddd6fe;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-body);
+      font-size: 14px;
+      background: white;
+      outline: none;
+    }
+    .lead-fields input:focus { border-color: #7c3aed; }
+    .lead-fields .full { grid-column: 1 / -1; }
+
+    .lead-submitted-msg {
+      display: none;
+      text-align: center;
+      padding: 14px;
+      background: #d1fae5;
+      border-radius: var(--radius-sm);
+      color: #065f46;
+      font-weight: 600;
+      font-family: var(--font-head);
+      font-size: 14px;
+    }
+
+    .result-actions {
+      display: flex; gap: 12px; margin-top: 16px;
+    }
+    .btn-again {
+      flex: 1;
+      padding: 12px;
+      background: #f1f5f9;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text);
+      transition: all .2s;
+    }
+    .btn-again:hover { background: #e2e8f0; }
+
+    .disclaimer {
+      margin-top: 14px;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* =====================================================
+       RESPONSIVE
+       ===================================================== */
+    @media (max-width: 600px) {
+      .elig-header, #step-select, #step-form, #step-result {
+        padding-left: 20px; padding-right: 20px;
+      }
+      .loan-cards { grid-template-columns: 1fr; }
+      .form-grid  { grid-template-columns: 1fr; }
+      .form-group.full { grid-column: 1; }
+      .result-cards   { grid-template-columns: 1fr; }
+      .lead-fields    { grid-template-columns: 1fr; }
+      .lead-fields .full { grid-column: 1; }
+      .elig-header h2 { font-size: 20px; }
+    }
+
+    /* =====================================================
+       FLOATING TRIGGER BUTTON (stays on page always)
+       ===================================================== */
+    #elig-fab {
+      position: fixed;
+      bottom: 28px; right: 28px;
+      background: var(--brand-grad);
+      color: white;
+      border: none;
+      border-radius: 99px;
+      padding: 14px 22px;
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(71,17,104,0.4);
+      z-index: 8999;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all .25s;
+    }
+    #elig-fab:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 30px rgba(71,17,104,0.5);
+    }
+    @media (max-width:500px) {
+      #elig-fab { bottom: 16px; right: 16px; padding: 12px 16px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- =========================================================
+     DEMO BACKGROUND — REMOVE THIS SECTION WHEN EMBEDDING
+     ========================================================= -->
+<div class="demo-page">
+  <div class="demo-logo">
+    FINK<span class="demo-rupee">₹</span>RT
+  </div>
+  <p style="font-family:'Outfit',sans-serif;font-size:11px;letter-spacing:2px;color:#471168;margin-top:4px;">FINANCIAL SERVICES</p>
+  <p class="demo-hint">
+    The eligibility popup appears automatically after <strong>5 seconds</strong>.<br>
+    Or click the button below / the floating button to open it now.
+  </p>
+  <button class="demo-trigger-btn" onclick="openEligibilityModal()">
+    <i class="fa-solid fa-calculator"></i> Check Loan Eligibility Now
+  </button>
+</div>
+<!-- =========================================================
+     END DEMO BACKGROUND
+     ========================================================= -->
+
+
+<!-- =========================================================
+     FLOATING ACTION BUTTON (embed this in your site)
+     ========================================================= -->
+<button id="elig-fab" onclick="openEligibilityModal()">
+  <i class="fa-solid fa-calculator"></i>
+  Check Eligibility
+</button>
+
+
+<!-- =========================================================
+     LOAN ELIGIBILITY MODAL
+     ========================================================= -->
+<div id="elig-overlay" role="dialog" aria-modal="true" aria-label="Loan Eligibility Checker">
+  <div class="elig-modal">
+
+    <!-- Close -->
+    <button class="elig-close" onclick="closeEligibilityModal()" aria-label="Close">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+
+    <!-- Header (always visible) -->
+    <div class="elig-header">
+      <div class="badge"><i class="fa-solid fa-shield-check"></i> Free Eligibility Check</div>
+      <h2 id="modal-title">Which loan are you looking for?</h2>
+      <p id="modal-subtitle">Get an instant estimate — no documents needed</p>
+    </div>
+
+    <!-- ── STEP 1: Loan selector ── -->
+    <div id="step-select">
+      <div class="loan-cards">
+
+        <div class="loan-card personal" onclick="selectLoan('personal')" tabindex="0" role="button"
+             onkeydown="if(event.key==='Enter')selectLoan('personal')">
+          <div class="lc-icon"><i class="fa-solid fa-user"></i></div>
+          <h3>Personal Loan</h3>
+          <p>Up to ₹40L · Fast disbursal · Minimal docs</p>
+        </div>
+
+        <div class="loan-card business" onclick="selectLoan('business')" tabindex="0" role="button"
+             onkeydown="if(event.key==='Enter')selectLoan('business')">
+          <div class="lc-icon"><i class="fa-solid fa-briefcase"></i></div>
+          <h3>Business Loan</h3>
+          <p>Up to ₹2Cr · GST/ITR verified · Quick sanction</p>
+        </div>
+
+        <div class="loan-card home" onclick="selectLoan('home')" tabindex="0" role="button"
+             onkeydown="if(event.key==='Enter')selectLoan('home')">
+          <div class="lc-icon"><i class="fa-solid fa-house"></i></div>
+          <h3>Home Loan</h3>
+          <p>Up to ₹5Cr · 30-year tenure · Low EMI</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── STEP 2: Form ── -->
+    <div id="step-form">
+      <button class="form-back" onclick="goToSelect()">
+        <i class="fa-solid fa-arrow-left"></i> Change loan type
+      </button>
+      <div id="form-loan-badge" class="form-loan-badge"></div>
+      <form id="elig-form" onsubmit="return false;" novalidate>
+        <div class="form-grid" id="form-fields"></div>
+        <div class="form-actions">
+          <button type="button" class="btn-reset" onclick="resetForm()">
+            <i class="fa-solid fa-rotate-left"></i> Reset
+          </button>
+          <button type="button" class="btn-primary" onclick="checkEligibility()">
+            Check My Eligibility <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ── STEP 3: Result ── -->
+    <div id="step-result">
+      <div id="result-hero" class="result-hero">
+        <div class="result-status-icon" id="result-icon"></div>
+        <h3 id="result-title"></h3>
+        <div class="result-amount" id="result-amount"></div>
+        <p id="result-subtitle"></p>
+      </div>
+
+      <div class="result-cards" id="result-cards"></div>
+      <div id="result-reasons"></div>
+      <div id="result-tips"></div>
+
+      <!-- Lead capture -->
+      <div class="lead-box" id="lead-box">
+        <h4><i class="fa-solid fa-phone" style="margin-right:6px;"></i>Get a Free Expert Callback</h4>
+        <p>Our loan experts will help you get the best deal within 24 hours.</p>
+        <div class="lead-fields">
+          <input type="text" id="lead-name" placeholder="Full Name" />
+          <input type="tel" id="lead-phone" placeholder="Phone Number" />
+          <input type="email" id="lead-email" placeholder="Email Address" class="full" />
+        </div>
+        <button class="btn-primary" onclick="submitLead()" style="width:100%;padding:13px;">
+          <i class="fa-solid fa-headset" style="margin-right:6px;"></i>
+          Get Callback from Expert
+        </button>
+        <div class="lead-submitted-msg" id="lead-submitted">
+          <i class="fa-solid fa-circle-check" style="margin-right:6px;"></i>
+          Thank you! Our expert will call you shortly.
+        </div>
+      </div>
+
+      <div class="result-actions">
+        <button class="btn-again" onclick="goToSelect()">
+          <i class="fa-solid fa-rotate-left"></i> Check Another Loan
+        </button>
+        <button class="btn-primary" style="flex:1;" onclick="goToForm()">
+          <i class="fa-solid fa-edit"></i> Edit Details
+        </button>
+      </div>
+      <p class="disclaimer">
+        ⓘ This is an indicative estimate only and not a guarantee of approval. Final eligibility
+        is determined by the lending institution based on full verification. Finkart is a
+        financial services intermediary and not a bank or NBFC.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+     ========================================================= -->
+<script>
+/* =====================================================
+   CONFIG — change these values to customise behaviour
+   ===================================================== */
+const CONFIG = {
+  popupDelayMs: 5000,             // 5 seconds
+  cooldownHours: 24,              // don't re-show popup for 24 hrs after close
+  storageKeyShown: 'finkart_popup_shown_at',
+  storageKeyLoanType: 'finkart_last_loan_type',
+};
+
+/* =====================================================
+   STATE
+   ===================================================== */
+let currentLoan = null;           // 'personal' | 'business' | 'home'
+let formData = {};                // captured form values
+
+/* =====================================================
+   POPUP TIMING
+   ===================================================== */
+function shouldShowPopup() {
+  const shownAt = localStorage.getItem(CONFIG.storageKeyShown);
+  if (!shownAt) return true;
+  const elapsed = Date.now() - parseInt(shownAt, 10);
+  return elapsed > CONFIG.cooldownHours * 3600 * 1000;
+}
+
+// Schedule the 5-second popup
+if (shouldShowPopup()) {
+  setTimeout(() => {
+    // Only auto-show if overlay is not already open
+    if (!document.getElementById('elig-overlay').classList.contains('active')) {
+      openEligibilityModal(true);
+    }
+  }, CONFIG.popupDelayMs);
+}
+
+/* =====================================================
+   OPEN / CLOSE
+   ===================================================== */
+function openEligibilityModal(isAuto = false) {
+  if (!isAuto) {
+    // If opened manually, restore last loan type if saved
+    const saved = localStorage.getItem(CONFIG.storageKeyLoanType);
+    if (saved) currentLoan = saved;
+  }
+  document.getElementById('elig-overlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  goToSelect();
+}
+
+function closeEligibilityModal() {
+  document.getElementById('elig-overlay').classList.remove('active');
+  document.body.style.overflow = '';
+  localStorage.setItem(CONFIG.storageKeyShown, Date.now().toString());
+}
+
+// Close on backdrop click
+document.getElementById('elig-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeEligibilityModal();
+});
+
+// Close on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeEligibilityModal();
+});
+
+/* =====================================================
+   NAVIGATION BETWEEN STEPS
+   ===================================================== */
+function goToSelect() {
+  show('step-select');
+  hide('step-form');
+  hide('step-result');
+  setModalHeader('Which loan are you looking for?', 'Get an instant estimate — no documents needed');
+}
+
+function goToForm() {
+  show('step-form');
+  hide('step-select');
+  hide('step-result');
+}
+
+function show(id) { document.getElementById(id).style.display = 'block'; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+
+function setModalHeader(title, subtitle) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-subtitle').textContent = subtitle;
+}
+
+/* =====================================================
+   LOAN TYPE SELECTION
+   ===================================================== */
+const LOAN_META = {
+  personal: { label: 'Personal Loan', icon: 'fa-user', class: 'personal' },
+  business: { label: 'Business Loan', icon: 'fa-briefcase', class: 'business' },
+  home:     { label: 'Home Loan',     icon: 'fa-house',    class: 'home' },
+};
+
+function selectLoan(type) {
+  currentLoan = type;
+  localStorage.setItem(CONFIG.storageKeyLoanType, type);
+
+  const meta = LOAN_META[type];
+  const badge = document.getElementById('form-loan-badge');
+  badge.className = `form-loan-badge ${meta.class}`;
+  badge.innerHTML = `<i class="fa-solid ${meta.icon}"></i> ${meta.label}`;
+
+  setModalHeader(
+    `Check ${meta.label} Eligibility`,
+    'Fill in your details — takes under 2 minutes'
+  );
+
+  renderForm(type);
+  goToForm();
+  resetLeadForm();
+}
+
+/* =====================================================
+   FORM FIELD DEFINITIONS
+   ===================================================== */
+const FIELDS = {
+  personal: [
+    { id:'name',        label:'Full Name',          type:'text',   ph:'e.g. Priya Sharma',  full:true },
+    { id:'age',         label:'Age (years)',         type:'number', ph:'e.g. 32' },
+    { id:'empType',     label:'Employment Type',     type:'select', options:['Salaried','Self-Employed','Business Owner','Freelancer'] },
+    { id:'income',      label:'Monthly Income (₹)',  type:'number', ph:'e.g. 60000',
+      tip:'Your in-hand monthly salary or net income after taxes.' },
+    { id:'emis',        label:'Current EMIs / Month (₹)', type:'number', ph:'0 if none',
+      tip:'Total of all active loan EMIs you are paying each month.' },
+    { id:'city',        label:'City',               type:'text',   ph:'e.g. Mumbai' },
+    { id:'cibil',       label:'CIBIL / Credit Score', type:'number', ph:'300–900',
+      tip:'Check your credit score free via BankBazaar, CIBIL, or Paisa Bazaar.' },
+    { id:'loanAmt',     label:'Loan Amount Needed (₹)', type:'number', ph:'e.g. 500000' },
+    { id:'tenure',      label:'Tenure (months)',     type:'number', ph:'e.g. 36' },
+  ],
+  business: [
+    { id:'name',        label:'Full Name',           type:'text',   ph:'e.g. Rahul Gupta', full:true },
+    { id:'age',         label:'Age (years)',          type:'number', ph:'e.g. 38' },
+    { id:'bizType',     label:'Business Type',        type:'select', options:['Proprietorship','Partnership','Pvt Ltd','LLP','Other'] },
+    { id:'income',      label:'Monthly Business Income (₹)', type:'number', ph:'e.g. 200000',
+      tip:'Average monthly revenue or turnover of your business.' },
+    { id:'emis',        label:'Existing EMIs / Month (₹)',   type:'number', ph:'0 if none' },
+    { id:'vintage',     label:'Business Vintage (years)',    type:'number', ph:'e.g. 3',
+      tip:'How many years has your business been registered and operational?' },
+    { id:'city',        label:'City',                type:'text',   ph:'e.g. Delhi' },
+    { id:'cibil',       label:'CIBIL / Credit Score', type:'number', ph:'300–900',
+      tip:'Both personal and business CIBIL scores are considered.' },
+    { id:'loanAmt',     label:'Loan Amount Needed (₹)', type:'number', ph:'e.g. 2000000' },
+    { id:'tenure',      label:'Tenure (months)',     type:'number', ph:'e.g. 60' },
+  ],
+  home: [
+    { id:'name',        label:'Full Name',           type:'text',   ph:'e.g. Amit Verma',  full:true },
+    { id:'age',         label:'Age (years)',          type:'number', ph:'e.g. 35' },
+    { id:'empType',     label:'Employment Type',      type:'select', options:['Salaried','Self-Employed','Business Owner'] },
+    { id:'income',      label:'Monthly Income (₹)',   type:'number', ph:'e.g. 80000',
+      tip:'Co-applicant income can be added for higher eligibility.' },
+    { id:'emis',        label:'Current EMIs / Month (₹)',  type:'number', ph:'0 if none' },
+    { id:'city',        label:'City',                type:'text',   ph:'e.g. Bengaluru' },
+    { id:'cibil',       label:'CIBIL / Credit Score', type:'number', ph:'300–900' },
+    { id:'propValue',   label:'Property Value (₹)',   type:'number', ph:'e.g. 5000000',
+      tip:'Approximate market value of the property you wish to buy.' },
+    { id:'downPayment', label:'Down Payment (₹)',     type:'number', ph:'e.g. 1000000',
+      tip:'Amount you can pay upfront. Banks typically fund 75–90% of property value (LTV).' },
+    { id:'tenure',      label:'Tenure (months)',      type:'number', ph:'e.g. 240',
+      tip:'Home loan tenure can go up to 360 months (30 years).' },
+  ],
+};
+
+/* =====================================================
+   RENDER DYNAMIC FORM
+   ===================================================== */
+function renderForm(type) {
+  const fields = FIELDS[type];
+  const container = document.getElementById('form-fields');
+  container.innerHTML = fields.map(f => {
+    const tipHtml = f.tip
+      ? `<span class="tip" data-tip="${f.tip}">?</span>`
+      : '';
+    const fullClass = f.full ? ' full' : '';
+    let input = '';
+    if (f.type === 'select') {
+      const opts = f.options.map(o => `<option value="${o}">${o}</option>`).join('');
+      input = `<select id="f_${f.id}" required><option value="">Select…</option>${opts}</select>`;
+    } else {
+      input = `<input type="${f.type}" id="f_${f.id}" placeholder="${f.ph}" required ${f.type==='number'?'min="0"':''}>`;
+    }
+    return `
+      <div class="form-group${fullClass}">
+        <label for="f_${f.id}">${f.label}${tipHtml}</label>
+        ${input}
+      </div>`;
+  }).join('');
+}
+
+function resetForm() {
+  document.getElementById('elig-form').reset();
+  document.querySelectorAll('.form-group input, .form-group select').forEach(el => {
+    el.classList.remove('invalid');
+  });
+}
+
+/* =====================================================
+   ELIGIBILITY LOGIC
+   ===================================================== */
+
+/**
+ * Check eligibility based on Indian banking-style rules.
+ * Returns an object: { eligible, maxAmount, emi, interestRange, tenureRange, issues, tips, heroClass }
+ */
+function checkEligibility() {
+  // Validate required fields
+  const fields = FIELDS[currentLoan];
+  let valid = true;
+  fields.forEach(f => {
+    const el = document.getElementById('f_' + f.id);
+    if (!el) return;
+    el.classList.remove('invalid');
+    if (!el.value || (f.type === 'select' && el.value === '')) {
+      el.classList.add('invalid');
+      valid = false;
+    }
+  });
+  if (!valid) { alert('Please fill in all required fields.'); return; }
+
+  // Collect values into formData
+  formData = {};
+  fields.forEach(f => {
+    const el = document.getElementById('f_' + f.id);
+    formData[f.id] = (f.type === 'number') ? parseFloat(el.value) || 0 : el.value;
+  });
+
+  let result;
+  if (currentLoan === 'personal')  result = calcPersonal(formData);
+  if (currentLoan === 'business') result = calcBusiness(formData);
+  if (currentLoan === 'home')     result = calcHome(formData);
+
+  renderResult(result);
+}
+
+/* ── Personal Loan eligibility ── */
+function calcPersonal(d) {
+  const issues = [], tips = [];
+  let score = 100;
+
+  // Age check
+  if (d.age < 21 || d.age > 60) {
+    issues.push('Age must be between 21 and 60 years for most lenders.');
+    score -= 40;
+  }
+
+  // CIBIL check
+  let interestRate;
+  if (d.cibil >= 750) {
+    interestRate = [10.5, 14];
+  } else if (d.cibil >= 650) {
+    interestRate = [14, 18];
+    issues.push('Credit score is in the medium-risk range (650–749). You may get a higher interest rate.');
+    tips.push('Improving your CIBIL to 750+ can reduce your interest rate significantly.');
+    score -= 20;
+  } else {
+    interestRate = [18, 24];
+    issues.push('Low credit score (below 650) significantly reduces approval chances.');
+    tips.push('Pay off existing debts and clear overdue amounts to improve your credit score.');
+    score -= 50;
+  }
+
+  // EMI burden check (FOIR — Fixed Obligation to Income Ratio)
+  const maxEmiCapacity = d.income * 0.50;     // Max 50% of income can go to EMIs
+  const freeCapacity = maxEmiCapacity - d.emis; // Remaining capacity after existing EMIs
+
+  if (d.emis > d.income * 0.40) {
+    issues.push(`Existing EMIs (₹${fmt(d.emis)}) exceed 40% of your income. Banks prefer FOIR below 50%.`);
+    tips.push('Prepay or close smaller loans to reduce your monthly EMI burden.');
+    score -= 25;
+  }
+  if (d.income < 20000) {
+    issues.push('Minimum monthly income of ₹20,000 is usually required for personal loans.');
+    score -= 30;
+  }
+
+  // Calculate eligible amount
+  const avgRate = (interestRate[0] + interestRate[1]) / 2 / 100 / 12;
+  const tenureMonths = Math.min(d.tenure, 60); // Max 60 months personal loan
+  const maxEmiForLoan = Math.max(freeCapacity, 0);
+  let maxAmount = 0;
+  if (avgRate > 0 && maxEmiForLoan > 0) {
+    maxAmount = maxEmiForLoan * (Math.pow(1 + avgRate, tenureMonths) - 1) /
+                (avgRate * Math.pow(1 + avgRate, tenureMonths));
+  }
+  maxAmount = Math.min(maxAmount, 4000000); // Cap at ₹40L
+  maxAmount = Math.round(maxAmount / 1000) * 1000;
+
+  // EMI on max amount
+  const emi = calcEMI(maxAmount, (interestRate[0] + interestRate[1]) / 2, tenureMonths);
+
+  // Tips
+  if (score >= 80) tips.push('Great profile! You may qualify for pre-approved offers from top banks.');
+  if (d.income >= 50000 && d.cibil >= 750) tips.push('You are likely eligible for the lowest interest rates in the market.');
+  tips.push('Compare offers from SBI, HDFC, ICICI, and Bajaj Finance before deciding.');
+
+  const eligible = score >= 60 && maxAmount >= 50000 && d.age >= 21 && d.age <= 60;
+  const partial = !eligible && score >= 40 && maxAmount > 0;
+
+  return {
+    eligible: eligible ? 'eligible' : (partial ? 'partial' : 'not-eligible'),
+    maxAmount: eligible || partial ? maxAmount : 0,
+    emi: eligible || partial ? emi : 0,
+    interestRange: interestRate,
+    tenureRange: [tenureMonths, 60],
+    issues,
+    tips,
+    loanType: 'Personal Loan',
+    icon: 'fa-user',
+  };
+}
+
+/* ── Business Loan eligibility ── */
+function calcBusiness(d) {
+  const issues = [], tips = [];
+  let score = 100;
+
+  if (d.age < 21 || d.age > 60) {
+    issues.push('Promoter age should be between 21 and 65 years.');
+    score -= 30;
+  }
+  if (d.vintage < 2) {
+    issues.push('Most lenders require a minimum business vintage of 2 years.');
+    tips.push('Build business history: file ITR and maintain GST records for 2 consecutive years.');
+    score -= 35;
+  }
+
+  let interestRate;
+  if (d.cibil >= 750) {
+    interestRate = [11, 16];
+  } else if (d.cibil >= 650) {
+    interestRate = [16, 22];
+    issues.push('Business credit score is in the medium risk band (650–749).');
+    score -= 20;
+  } else {
+    interestRate = [22, 28];
+    issues.push('Low CIBIL score may result in loan rejection or very high interest rates.');
+    score -= 45;
+  }
+
+  const maxEmiCapacity = d.income * 0.55; // Businesses allowed up to 55% DSCR
+  const freeCapacity = maxEmiCapacity - d.emis;
+  if (d.emis > d.income * 0.50) {
+    issues.push(`Existing EMIs (₹${fmt(d.emis)}) exceed 50% of monthly business income.`);
+    tips.push('Close high-interest unsecured loans before applying for a business loan.');
+    score -= 20;
+  }
+
+  if (d.income < 50000) {
+    issues.push('Monthly business income of at least ₹50,000 is typically required.');
+    score -= 25;
+  }
+
+  const avgRate = (interestRate[0] + interestRate[1]) / 2 / 100 / 12;
+  const tenureMonths = Math.min(d.tenure, 84); // Max 84 months
+  const maxEmiForLoan = Math.max(freeCapacity, 0);
+  let maxAmount = 0;
+  if (avgRate > 0 && maxEmiForLoan > 0) {
+    maxAmount = maxEmiForLoan * (Math.pow(1 + avgRate, tenureMonths) - 1) /
+                (avgRate * Math.pow(1 + avgRate, tenureMonths));
+  }
+  maxAmount = Math.min(maxAmount, 20000000); // Cap ₹2Cr
+  maxAmount = Math.round(maxAmount / 10000) * 10000;
+
+  const emi = calcEMI(maxAmount, (interestRate[0] + interestRate[1]) / 2, tenureMonths);
+
+  if (score >= 80) tips.push('Excellent profile! You may qualify for MSME priority lending schemes.');
+  tips.push('Prepare last 2 years ITR and 6 months GST returns to get faster approval.');
+  tips.push('MUDRA Loan or CGTMSE-backed loans can help if collateral is unavailable.');
+
+  const eligible = score >= 60 && maxAmount >= 100000 && d.vintage >= 2;
+  const partial = !eligible && score >= 35 && maxAmount > 0;
+
+  return {
+    eligible: eligible ? 'eligible' : (partial ? 'partial' : 'not-eligible'),
+    maxAmount: eligible || partial ? maxAmount : 0,
+    emi: eligible || partial ? emi : 0,
+    interestRange: interestRate,
+    tenureRange: [tenureMonths, 84],
+    issues,
+    tips,
+    loanType: 'Business Loan',
+    icon: 'fa-briefcase',
+  };
+}
+
+/* ── Home Loan eligibility ── */
+function calcHome(d) {
+  const issues = [], tips = [];
+  let score = 100;
+
+  if (d.age < 21 || d.age > 60) {
+    issues.push('Age should be between 21 and 60 at loan disbursal for most banks.');
+    score -= 30;
+  }
+
+  let interestRate;
+  if (d.cibil >= 750) {
+    interestRate = [8.4, 9.5];
+  } else if (d.cibil >= 650) {
+    interestRate = [9.5, 11.5];
+    issues.push('A CIBIL score of 750+ can save you ₹10,000s per year in interest.');
+    tips.push('Improve credit score before applying to unlock the best home loan rates.');
+    score -= 20;
+  } else {
+    interestRate = [11.5, 14];
+    issues.push('Low CIBIL score (below 650) will make home loan approval difficult.');
+    score -= 50;
+  }
+
+  // LTV calculation
+  const loanNeeded = d.propValue - d.downPayment;
+  const ltv = (loanNeeded / d.propValue) * 100;
+
+  // Max LTV rules (RBI guidelines)
+  let maxLTV;
+  if (d.propValue <= 3000000)        maxLTV = 90;
+  else if (d.propValue <= 7500000)   maxLTV = 80;
+  else                                maxLTV = 75;
+
+  if (ltv > maxLTV) {
+    issues.push(`LTV ratio is ${ltv.toFixed(1)}%, but max allowed for this property value is ${maxLTV}%. Please increase your down payment.`);
+    tips.push(`You need a minimum down payment of ₹${fmt(Math.ceil(d.propValue * (1 - maxLTV / 100) / 1000) * 1000)}.`);
+    score -= 30;
+  }
+
+  // Income-based eligibility
+  const maxEmiCapacity = d.income * 0.50;
+  const freeCapacity = maxEmiCapacity - d.emis;
+  if (d.emis > d.income * 0.40) {
+    issues.push(`Existing EMIs (₹${fmt(d.emis)}) already consume more than 40% of your income.`);
+    tips.push('Consider adding a co-applicant (spouse/parent) to increase combined income.');
+    score -= 20;
+  }
+
+  const tenureMonths = Math.min(d.tenure, 360); // Max 30 years
+  const avgRate = (interestRate[0] + interestRate[1]) / 2 / 100 / 12;
+  const maxEmiForLoan = Math.max(freeCapacity, 0);
+
+  // Eligible amount: min of income-based and LTV-based
+  let incomeBasedMax = 0;
+  if (avgRate > 0 && maxEmiForLoan > 0) {
+    incomeBasedMax = maxEmiForLoan * (Math.pow(1 + avgRate, tenureMonths) - 1) /
+                     (avgRate * Math.pow(1 + avgRate, tenureMonths));
+  }
+  const ltvBasedMax = d.propValue * (maxLTV / 100);
+  let maxAmount = Math.min(incomeBasedMax, ltvBasedMax);
+  maxAmount = Math.min(maxAmount, 50000000); // Cap ₹5Cr
+  maxAmount = Math.round(maxAmount / 10000) * 10000;
+
+  const emi = calcEMI(maxAmount, (interestRate[0] + interestRate[1]) / 2, tenureMonths);
+
+  tips.push('Consider PMAY (Pradhan Mantri Awas Yojana) for additional subsidies if you qualify.');
+  tips.push('Compare rates from SBI, HDFC, ICICI, Kotak, and LIC Housing Finance.');
+  if (score >= 80) tips.push('Your profile is strong! You may be eligible for balance transfer offers.');
+
+  const eligible = score >= 60 && maxAmount >= 500000 && ltv <= maxLTV;
+  const partial = !eligible && score >= 40 && maxAmount > 0;
+
+  return {
+    eligible: eligible ? 'eligible' : (partial ? 'partial' : 'not-eligible'),
+    maxAmount: eligible || partial ? maxAmount : 0,
+    emi: eligible || partial ? emi : 0,
+    interestRange: interestRate,
+    tenureRange: [tenureMonths, 360],
+    issues,
+    tips,
+    loanType: 'Home Loan',
+    icon: 'fa-house',
+    ltv: ltv.toFixed(1),
+    maxLTV,
+    loanNeeded,
+  };
+}
+
+/* =====================================================
+   RENDER RESULT
+   ===================================================== */
+function renderResult(r) {
+  const hero = document.getElementById('result-hero');
+  hero.className = 'result-hero ' + r.eligible;
+
+  document.getElementById('result-icon').textContent =
+    r.eligible === 'eligible' ? '✅' : r.eligible === 'partial' ? '⚠️' : '❌';
+
+  document.getElementById('result-title').textContent =
+    r.eligible === 'eligible'
+      ? 'You are likely eligible!'
+      : r.eligible === 'partial'
+      ? 'Partially eligible — lower amount possible'
+      : 'Not eligible at this time';
+
+  document.getElementById('result-amount').textContent =
+    (r.eligible === 'eligible' || r.eligible === 'partial') && r.maxAmount > 0
+      ? `Up to ₹${fmt(r.maxAmount)}`
+      : '';
+
+  document.getElementById('result-subtitle').textContent =
+    r.eligible === 'eligible'
+      ? `Based on your profile, you may qualify for a ${r.loanType} of up to ₹${fmt(r.maxAmount)}.`
+      : r.eligible === 'partial'
+      ? 'You may qualify for a reduced amount. See details below.'
+      : 'Your current profile does not meet standard eligibility criteria. See tips to improve.';
+
+  // Stat cards
+  const cards = document.getElementById('result-cards');
+  const hasLoan = r.maxAmount > 0;
+  cards.innerHTML = `
+    <div class="result-card">
+      <div class="rc-label">Estimated Monthly EMI</div>
+      <div class="rc-value" style="color:var(--primary)">${hasLoan ? '₹'+fmt(Math.round(r.emi)) : '—'}</div>
+    </div>
+    <div class="result-card">
+      <div class="rc-label">Interest Rate Range</div>
+      <div class="rc-value">${r.interestRange[0]}% – ${r.interestRange[1]}% p.a.</div>
+    </div>
+    <div class="result-card">
+      <div class="rc-label">Max Eligible Amount</div>
+      <div class="rc-value">${hasLoan ? '₹'+fmt(r.maxAmount) : 'N/A'}</div>
+    </div>
+    <div class="result-card">
+      <div class="rc-label">Suggested Tenure</div>
+      <div class="rc-value">${r.tenureRange[0]} months</div>
+    </div>
+    ${r.ltv ? `
+    <div class="result-card">
+      <div class="rc-label">LTV Ratio</div>
+      <div class="rc-value" style="color:${r.ltv > r.maxLTV ? 'var(--red)':'var(--green)'}">${r.ltv}% (Max ${r.maxLTV}%)</div>
+    </div>
+    <div class="result-card">
+      <div class="rc-label">Loan Needed</div>
+      <div class="rc-value">₹${fmt(Math.round(r.loanNeeded))}</div>
+    </div>` : ''}
+  `;
+
+  // Issues
+  const reasonsEl = document.getElementById('result-reasons');
+  if (r.issues.length > 0) {
+    reasonsEl.innerHTML = `
+      <div class="reasons-box issues">
+        <h4><i class="fa-solid fa-triangle-exclamation" style="margin-right:6px;"></i>Eligibility Concerns</h4>
+        <ul>${r.issues.map(i => `<li>${i}</li>`).join('')}</ul>
+      </div>`;
+  } else {
+    reasonsEl.innerHTML = '';
+  }
+
+  // Tips
+  const tipsEl = document.getElementById('result-tips');
+  if (r.tips.length > 0) {
+    tipsEl.innerHTML = `
+      <div class="reasons-box tips">
+        <h4><i class="fa-solid fa-lightbulb" style="margin-right:6px;"></i>Tips to Improve / Next Steps</h4>
+        <ul>${r.tips.map(t => `<li>${t}</li>`).join('')}</ul>
+      </div>`;
+  } else {
+    tipsEl.innerHTML = '';
+  }
+
+  // Pre-fill lead name if entered
+  const leadNameEl = document.getElementById('lead-name');
+  if (formData.name && !leadNameEl.value) leadNameEl.value = formData.name;
+
+  // Reset lead submission state
+  document.getElementById('lead-submitted').style.display = 'none';
+  document.getElementById('lead-box').querySelector('.btn-primary').style.display = '';
+  document.getElementById('lead-box').querySelector('.lead-fields').style.display = 'grid';
+
+  setModalHeader(`${r.loanType} Eligibility Result`, 'This is an estimate only');
+
+  hide('step-form');
+  hide('step-select');
+  show('step-result');
+
+  // Scroll modal to top
+  document.querySelector('.elig-modal').scrollTop = 0;
+}
+
+/* =====================================================
+   LEAD FORM SUBMISSION
+   ===================================================== */
+function submitLead() {
+  const name  = document.getElementById('lead-name').value.trim();
+  const phone = document.getElementById('lead-phone').value.trim();
+  const email = document.getElementById('lead-email').value.trim();
+
+  if (!name || !phone) {
+    alert('Please enter your name and phone number.');
+    return;
+  }
+
+  // ── Replace this section with your actual backend / CRM call ──
+  console.log('Finkart Lead Submitted:', {
+    name, phone, email,
+    loanType: currentLoan,
+    formData,
+    timestamp: new Date().toISOString(),
+  });
+  // ── End backend section ──
+
+  document.getElementById('lead-box').querySelector('.lead-fields').style.display = 'none';
+  document.getElementById('lead-box').querySelector('.btn-primary').style.display = 'none';
+  document.getElementById('lead-submitted').style.display = 'block';
+}
+
+function resetLeadForm() {
+  ['lead-name','lead-phone','lead-email'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const submitted = document.getElementById('lead-submitted');
+  if (submitted) submitted.style.display = 'none';
+  const lb = document.getElementById('lead-box');
+  if (lb) {
+    const btn = lb.querySelector('.btn-primary');
+    const fields = lb.querySelector('.lead-fields');
+    if (btn) btn.style.display = '';
+    if (fields) fields.style.display = 'grid';
+  }
+}
+
+/* =====================================================
+   HELPERS
+   ===================================================== */
+
+/** EMI formula: P * r * (1+r)^n / ((1+r)^n - 1) */
+function calcEMI(principal, annualRate, months) {
+  if (!principal || !annualRate || !months) return 0;
+  const r = annualRate / 100 / 12;
+  return principal * r * Math.pow(1 + r, months) / (Math.pow(1 + r, months) - 1);
+}
+
+/** Format number in Indian style with ₹ separators */
+function fmt(n) {
+  if (!n && n !== 0) return '—';
+  return Math.round(n).toLocaleString('en-IN');
+}
+</script>
+
+</body>
+</html>
